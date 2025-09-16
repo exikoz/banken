@@ -2,43 +2,43 @@ Rapport
 
 16/9 2025
 
-- Team:Malmö
-- Deltagare (närvaro):Hussein, Yasin, Alexander, Joco
-- Sprintmål (veckans DoD):** UML + första POCO-klasser + README med teamets arbetsprocess.
+- Team:MalmÃ¶
+- Deltagare (nÃ¤rvaro):Hussein, Yasin, Alexander, Joco
+- SprintmÃ¥l (veckans DoD):** UML + fÃ¶rsta POCO-klasser + README med teamets arbetsprocess.
 
 - Vad vi gjorde:
 
-	Sätt upp repo (main + develop). Branch policy: feature/*, PR-krav med code review.									
-    Domänmodellering för Banken: Användare, Konto, Transaktion. UML-skiss i /docs.
-    Skapa lösningsstruktur** (.sln) och projekt.
-    Definition of Done: UML + första POCO-klasser
+	SÃ¤tt upp repo (main + develop). Branch policy: feature/*, PR-krav med code review.									
+    DomÃ¤nmodellering fÃ¶r Banken: AnvÃ¤ndare, Konto, Transaktion. UML-skiss i /docs.
+    Skapa lÃ¶sningsstruktur** (.sln) och projekt.
+    Definition of Done: UML + fÃ¶rsta POCO-klasser
 
 -Teamets arbetsprocess.
 
     Agile Arbetsprocess
 
     Sprintstruktur
-    1 veckas sprints** anpassade efter vår utbildning.
+    1 veckas sprints** anpassade efter vÃ¥r utbildning.
 
-    Möten
-    Tisdagar:** Boiler room meetings - sprint planning och retrospektiv
-    Onsdagar:** Checkpoint med lärare - feedback och vägledning
+    MÃ¶ten
+    Tisdagar: Boiler room meetings - sprint planning och retrospektiv
+    Onsdagar: Checkpoint med lÃ¤rare - feedback och vÃ¤gledning
 
     Verktyg
-    Linear.app:** Task tracking och sprintplanering
-    Discord: Daglig kommunikation och problemlösning
+    Linear.app: Task tracking och sprintplanering
+    Discord: Daglig kommunikation och problemlÃ¶sning
 
-    Arbetsflöde
+    ArbetsflÃ¶de
     1. Tisdag: Sprint planning
-    2. Onsdag: Checkpoint med lärare
+    2. Onsdag: Checkpoint med lÃ¤rare
     3. Resten av veckan: Utveckling med kontinuerlig kommunikation via Discord
-    4. Uppföljning av tasks i Linear under hela sprinten
+    4. UppfÃ¶ljning av tasks i Linear under hela sprinten
 
-    Kort och koncist process som passar vårt veckoschema på Chas Academy.
+    Kort och koncist process som passar vÃ¥rt veckoschema pÃ¥ Chas Academy.
 
 
 - Problem/hinder:
-    Uppsättning av Git, etc, alla problem vid hafr under dagen har vi löst
+    UppsÃ¤ttning av Git, etc, alla problem vid hafr under dagen har vi lÃ¶st
 
 
 
