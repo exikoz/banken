@@ -8,12 +8,12 @@ namespace bank
 {
     internal class Account
     {
-        public int id {  get; set; }
-        public int user_id { get; set; }
-        public int accountNumber { get; set; }
-        public decimal balance { get; set; }
+        public int Id {  get; set; }
+        public int UserId { get; set; }
+        public int AccountNumber { get; set; }
+        public decimal Balance { get; set; }
            
-        public DateTime timestamp { get; set; }
+        public DateTime Timestamp { get; set; }
 
     }
 }
