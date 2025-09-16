@@ -2,15 +2,15 @@ Rapport
 
 16/9 2025
 
-- Team:Malmö
+- Team: Malmö
 - Deltagare (närvaro):Hussein, Yasin, Alexander, Joco
-- Sprintmål (veckans DoD):** UML + första POCO-klasser + README med teamets arbetsprocess.
+- Sprintmål (veckans DoD): UML + första POCO-klasser + README med teamets arbetsprocess.
 
 - Vad vi gjorde:
 
 	Sätt upp repo (main + develop). Branch policy: feature/*, PR-krav med code review.									
     Domänmodellering för Banken: Användare, Konto, Transaktion. UML-skiss i /docs.
-    Skapa lösningsstruktur** (.sln) och projekt.
+    Skapa lösningsstruktur (.sln) och projekt.
     Definition of Done: UML + första POCO-klasser
 
 -Teamets arbetsprocess.
@@ -38,7 +38,7 @@ Rapport
 
 
 - Problem/hinder:
-    Uppsättning av Git, etc, alla problem vid hafr under dagen har vi löst
+    Uppsättning av Git, etc, alla problem vid haft under dagen har vi löst.
 
 
 
