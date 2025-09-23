@@ -1,5 +1,23 @@
 Rapport
 
+Rapportör Joco Borghol 2025-09-23
+
+Deltagare (närvaro):Joco, Yasin, Alexander
+
+Sprintmål (veckans DoD): Implementerat enkla use cases: skapa konto, lista konton, se saldo + Körbar demo
+
+Vad vi gjorde: 
+Klasser, Ny UML mall,Plan kring intervuer, gjort mapper för våra klasser, m.m
+Vi har satt tydligare spelregler kring vår komunikation, detta för att vi som team ska vara mer effektiva.
+Kommunikation - All komunikation görs just denna servern/kanal. "Malmö .NET - möten"
+Boiler Room info senast 12.00 "Jag kommer eller inte kan komma pga."
+
+Problem/hinder: Komunikation, git,
+
+
+
+
+
 16/9 2025
 
 - Team: Malmö
