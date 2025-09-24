@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace bank.poco
 {   
+        // - Alexander 2025-09-23
         public class Bank
     {
 
@@ -16,18 +17,26 @@ namespace bank.poco
 
         public Bank() { }
 
-        // hanterar null vid hämtning
+        // Account? = metoden får returnera null -Alexander
         public Account? FindAccount(string accountNumber) 
         {
-            return Accounts.FirstOrDefault(a => a.AccountNumber == accountNumber); // stannar vid första match annars null(default)
+            return Accounts.FirstOrDefault(a => a.AccountNumber == accountNumber); // stannar vid första match annars null(default) -Alexander
         }
 
         public Account OpenAccount(User user, string accountNumber)
         {
-            if(user == null) throw new ArgumentNullException("Användare kunde inte hittas");
-            // Inte null och inte heller " "
-            if (string.IsNullOrWhiteSpace(accountNumber)) Console.WriteLine("Bank: Kontonummer måste innehålla något");
-            if(FindAccount(accountNumber) != null) Console.WriteLine("Bank: Kontonummer måste innehålla något");
+           
+            if (string.IsNullOrWhiteSpace(accountNumber)) Console.WriteLine($"Bank: Kontonummer måste innehålla något. Du skrev in: {accountNumber} \n ");
+            if (user == null) Console.WriteLine("Bank: User kunde inte hittas!");
+
+            if (FindAccount(accountNumber) == null)
+                Console.WriteLine($"Bank: Kontot: {accountNumber} är godkänt. \n");
+            else
+            {
+                Console.WriteLine($"Bank: Kontot: {accountNumber} är redan upptaget. \n");
+            };
+            
+            
             if (!Users.Contains(user)) 
             {
                 Users.Add(user);
@@ -36,6 +45,7 @@ namespace bank.poco
             var account = new Account(accountNumber, user);
             Accounts.Add(account);
             user.Accounts.Add(account);
+            Console.WriteLine($"Bank: Kontot: {account.AccountNumber}  har skapats till användar ID: {user.Id} \n");
             return account;
         }
 

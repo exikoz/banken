@@ -11,13 +11,19 @@
 
         public Transaction(string id, string accountNumber, DateTime timeStamp, string type)
         {
-            Id = id ?? "Transaction: Id kunde inte hittas!!";
-            AccountNumber = accountNumber ?? "Transaction: Kontonummer kune inte hittas!";
-            TimeStamp = timeStamp;
-            Type = type ?? "Typ kunde inte hittas!!!!";
+            if (string.IsNullOrWhiteSpace(id))
+                Console.WriteLine($"Transaction: Id: {id} är inte godkänt input. Måste innehålla något!!");
+
+            if (string.IsNullOrWhiteSpace(accountNumber))
+                Console.WriteLine($"Transaction: Kontonummer: {accountNumber}  är inte godkänt input. Måste innehålla något!!");
+            if (string.IsNullOrWhiteSpace(type))
+                Console.WriteLine($"Transaction: Transaktiontyp: {type}  är inte ett möjligt val.");
+            Id = id;
+            AccountNumber = accountNumber;
+            TimeStamp = timeStamp; 
+            Type = type;
+
         }
-
-
     }
 
 }

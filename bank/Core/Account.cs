@@ -14,9 +14,9 @@ namespace bank
         public decimal Balance { get; private set; }
         public User Owner { get; set; }
 
-        public Account(string accountNumber, User owner) { 
-            AccountNumber = accountNumber ?? throw new ArgumentNullException(nameof(accountNumber));
-            Owner = owner ?? throw new ArgumentNullException(nameof(owner));
+        public Account(string accountNumber, User owner) {
+            AccountNumber = accountNumber;
+            Owner = owner;
             Balance = 0;
         }
             
