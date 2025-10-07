@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 
 namespace bank.poco
 {   
-        // - Alexander 2025-09-23
         public class Bank
     {
 
@@ -17,10 +16,9 @@ namespace bank.poco
 
         public Bank() { }
 
-        // Account? = metoden får returnera null -Alexander
         public Account? FindAccount(string accountNumber) 
         {
-            return Accounts.FirstOrDefault(a => a.AccountNumber == accountNumber); // stannar vid första match annars null(default) -Alexander
+            return Accounts.FirstOrDefault(a => a.AccountNumber == accountNumber); 
         }
 
         public Account OpenAccount(User user, string accountNumber)
