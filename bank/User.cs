@@ -6,19 +6,20 @@ using System.Threading.Tasks;
 
 namespace bank
 {
-    internal class User
+    public class User
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public int PersonNumber { get; set; }
-        public int Phone {  get; set; }
-        public string Email { get; set; }
-        public string City { get; set; }
-        public string Adress { get; set; }
-
-        public int PostalCode { get; set; }
-
-        public DateTime  TimeStamp { get; set; }
+        public string Id { get; }
+        public string Name { get; }
+        public List<Account> Accounts { get; } = new();
+        public User(string id, string name)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                Console.WriteLine(nameof(id), " saknas eller kunde inte hämtas");
+            if (string.IsNullOrWhiteSpace(name))
+                Console.WriteLine(nameof(name), " saknas eller kunde inte hämtas");
+            Id = id;
+            Name = name;
+        }
     }
 
 }
