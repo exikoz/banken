@@ -42,6 +42,7 @@ namespace bank
             }
             Balance -= amount;
             Console.WriteLine($"Withdraw succeded: -{amount} kr. New balance = {Balance} kr.");
+
         }
 
 
