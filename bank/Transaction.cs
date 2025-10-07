@@ -6,16 +6,27 @@ using System.Threading.Tasks;
 
 namespace bank
 {
-    internal class Transaction
+    public class Transaction
+{
+    public string Id { get;  }
+    public string AccountNumber { get; }
+    public DateTime TimeStamp { get; }
+    public string Type { get; }
+    public Transaction(string id, string accountNumber, DateTime timeStamp, string type)
     {
-        public int Id { get; set; }
-        public int AccountId { get; set; }
-        public int Amount { get; set; }
-        public DateTime TransactionDate { get; set; }
+    if (string.IsNullOrWhiteSpace(id))
+    Console.WriteLine($"Transaction: Id: {id} is not valid input. It must contain something!!");
+    if (string.IsNullOrWhiteSpace(accountNumber))
+    Console.WriteLine($"Transaction: Account number: {accountNumber} is not valid input. It must contain something!!");
+    if (string.IsNullOrWhiteSpace(type))
+    Console.WriteLine($"Transaction: Transaction type: {type} is not a valid option.");
 
-        public DateTime Timestamp { get; set; }
-
+        Id = id;
+        AccountNumber = accountNumber;
+        TimeStamp = timeStamp; 
+        Type = type;
     }
+}
 }
 
 
