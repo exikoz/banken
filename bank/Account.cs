@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace bank
 {
-    internal class Account
+    public class Account
     {
         public string AccountNumber { get; set; }
         public decimal Balance { get; private set; }
