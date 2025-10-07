@@ -10,7 +10,7 @@ namespace bank
         public decimal Balance { get; protected set; }
         public User Owner { get; set; }
 
-        
+        // Transaction v40 - lista för att lagra transaktioner
         public List<Transaction> Transactions { get; } = new();
 
         public Account(string accountNumber, User owner)

@@ -7,7 +7,7 @@
         public DateTime TimeStamp { get; }
         public string Type { get; } // "Deposit" | "Withdraw"
         public decimal Amount { get; }
-
+        //rekommenderad, med Amount
         public Transaction(string id, string accountNumber, DateTime timeStamp, string type, decimal amount)
         {
             if (string.IsNullOrWhiteSpace(id))
