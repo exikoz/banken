@@ -1,19 +1,72 @@
-﻿using System;
+﻿using bank.poco;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace bank
 {
-    internal class Account
+    public class Account
     {
-        public int Id {  get; set; }
-        public int UserId { get; set; }
-        public int AccountNumber { get; set; }
-        public decimal Balance { get; set; }
-           
-        public DateTime Timestamp { get; set; }
+        public string AccountNumber { get; set; }
+        public decimal Balance { get; protected set; }
+        public User Owner { get; set; }
 
+        
+        public List<Transaction> Transactions { get; } = new();
+
+        public Account(string accountNumber, User owner)
+        {
+            AccountNumber = accountNumber;
+            Owner = owner;
+            Balance = 0;
+        }
+
+        
+        public virtual void Deposit(decimal amount)
+        {
+            if (amount <= 0)
+            {
+                Console.WriteLine("Deposit failed: beloppet måste vara större än 0.");
+                return;
+            }
+
+            Balance += amount;
+            
+            Transactions.Add(new Transaction(
+                id: Guid.NewGuid().ToString("N"),
+                accountNumber: AccountNumber,
+                timeStamp: DateTime.UtcNow,
+                type: "Deposit",
+                amount: amount
+            ));
+
+            Console.WriteLine($"Deposit lyckades: +{amount} kr. Ny balans = {Balance} kr.");
+        }
+
+        public virtual void Withdraw(decimal amount)
+        {
+            if (amount <= 0)
+            {
+                Console.WriteLine("Withdraw failed: beloppet måste vara större än 0.");
+                return;
+            }
+
+            if (amount > Balance)
+            {
+                Console.WriteLine("Withdraw failed: otillräckligt saldo.");
+                return;
+            }
+
+            Balance -= amount;
+          
+            Transactions.Add(new Transaction(
+                id: Guid.NewGuid().ToString("N"),
+                accountNumber: AccountNumber,
+                timeStamp: DateTime.UtcNow,
+                type: "Withdraw",
+                amount: amount
+            ));
+
+            Console.WriteLine($"Withdraw lyckades: -{amount} kr. Ny balans = {Balance} kr.");
+        }
     }
 }
