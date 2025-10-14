@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace bank
+namespace bank.poco
 {
     public class Account
     {
@@ -18,7 +18,7 @@ namespace bank
             Balance = 0;
         }
 
-        public void Deposit(decimal amount)
+        public virtual void Deposit(decimal amount)
         {
             if (amount <= 0)
             {
@@ -28,7 +28,7 @@ namespace bank
             Balance += amount;
             Console.WriteLine($"Deposit succeeded: {amount} kr. New Balance = {Balance} kr.");
         }
-        public void Withdraw(decimal amount)
+        public virtual void Withdraw(decimal amount)
         {
             if (amount <= 0)
             {
