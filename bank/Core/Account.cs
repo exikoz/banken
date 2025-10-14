@@ -4,8 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace bank
+namespace bank.Core
 {
+
+    /// <summary>
+    /// //////////////////7
+    /// </summary>
     public class Account
     {
         public string AccountNumber { get; set; }
@@ -22,7 +26,6 @@ namespace bank
             Balance = 0;
         }
 
-        
         public virtual void Deposit(decimal amount)
         {
             if (amount <= 0)
@@ -43,7 +46,6 @@ namespace bank
 
             Console.WriteLine($"Deposit lyckades: +{amount} kr. Ny balans = {Balance} kr.");
         }
-
         public virtual void Withdraw(decimal amount)
         {
             if (amount <= 0)
