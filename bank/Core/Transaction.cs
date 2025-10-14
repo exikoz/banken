@@ -1,4 +1,4 @@
-﻿namespace bank
+﻿namespace bank.Core
 {
     public class Transaction
     {
