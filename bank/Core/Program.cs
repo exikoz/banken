@@ -1,7 +1,6 @@
-﻿using bank.ui;
-using System.Threading;
+﻿using System.Threading;
 
-namespace bank.ConsoleUI
+namespace bank.Core
 {
     public class Program
     {
