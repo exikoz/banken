@@ -23,7 +23,7 @@ namespace bank.Core
             Console.WriteLine($"Konto: {accountResult} \n");
 
 
-            Console.Write("Sätt in pengar: \n");
+            Console.Write("Deposit money: \n");
             acc.Deposit(100);
 
             Console.Write("Ta ut pengarna igen: \n ");
