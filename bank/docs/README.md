@@ -1,3 +1,23 @@
+
+Rapport
+- **Rapportör och datum: Joco 14/10 2025
+- **Deltagare (närvaro):Yasin, Alexander, Hussein, Joco
+- **Sprintmål (veckans DoD): Detta måste göras innan vi går vidare
+I Program.cs: skapa Bank, User, och minst två konton (en SavingsAccount, en CheckingAccount).
+Menyval:
+  1) Lista alla konton
+  2) Visa positiva saldon
+  3) Visa top 3 transaktioner
+  4) Visa total saldo per användare
+  0) Avsluta
+Använd TryParse för menyval och visa felmeddelanden för ogiltiga alternativ.
+Skriv rubriker och tomradsavskiljning så resultatet blir tydligt.
+
+- - **Problem/hinder: Github compare and PR småstrul i början, lösa branchkonflikter som ej kan lösas i webbläsare,
+  tiden springer iväg snabbare än vad man tror.
+
+
+
 Rapport
 - **Rapportör och datum: Joco 7/10 2025
 - **Deltagare (närvaro):Yasin, Alexander, Hussein, Joco

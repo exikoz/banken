@@ -7,9 +7,6 @@ using System.Threading.Tasks;
 namespace bank.Core
 {
 
-    /// <summary>
-    /// //////////////////7
-    /// </summary>
     public class Account
     {
         public string AccountNumber { get; set; }
@@ -30,7 +27,7 @@ namespace bank.Core
         {
             if (amount <= 0)
             {
-                Console.WriteLine("Deposit failed: beloppet måste vara större än 0.");
+                Console.WriteLine("\nDeposit failed: The amount must be greater then 0..");
                 return;
             }
 
@@ -44,19 +41,19 @@ namespace bank.Core
                 amount: amount
             ));
 
-            Console.WriteLine($"Deposit lyckades: +{amount} kr. Ny balans = {Balance} kr.");
+            Console.WriteLine($"\nDeposit succeeded: {amount} kr. New Balance = {Balance} kr.");
         }
         public virtual void Withdraw(decimal amount)
         {
             if (amount <= 0)
             {
-                Console.WriteLine("Withdraw failed: beloppet måste vara större än 0.");
+                Console.WriteLine("\nWithdraw failed: The amount must be greater then 0.");
                 return;
             }
 
             if (amount > Balance)
             {
-                Console.WriteLine("Withdraw failed: otillräckligt saldo.");
+                Console.WriteLine("\nWithdraw failed: unsufficient balance");
                 return;
             }
 
@@ -70,7 +67,7 @@ namespace bank.Core
                 amount: amount
             ));
 
-            Console.WriteLine($"Withdraw lyckades: -{amount} kr. Ny balans = {Balance} kr.");
+            Console.WriteLine($"\nWithdraw succeded: -{amount} kr. New balance = {Balance} kr.");
         }
     }
 }
