@@ -8,7 +8,11 @@ namespace bank.Core
 {
     public class CheckingAccount : Account
     {
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="accountNumber"></param>
+        /// <param name="owner"></param>
   
         public CheckingAccount(string accountNumber, User owner) : base(accountNumber, owner){}
 

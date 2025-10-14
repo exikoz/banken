@@ -15,7 +15,11 @@ namespace bank.Core
 
 
         public Bank() { }
-
+        /// <summary>
+        /// /ss
+        /// </summary>
+        /// <param name="accountNumber"></param>
+        /// <returns></returns>
         public Account? FindAccount(string accountNumber) 
         {
             return Accounts.FirstOrDefault(a => a.AccountNumber == accountNumber); 
