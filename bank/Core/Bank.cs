@@ -51,6 +51,14 @@ namespace bank.Core
             return account;
         }
 
+        public void RegisterUser(User user)
+        {
+            if (!Users.Any(u => u.Id == user.Id))
+                Users.Add(user);
+        }
+
+        public User? FindUser(string userId) => Users.FirstOrDefault(u => u.Id == userId);
+
 
     }
 }

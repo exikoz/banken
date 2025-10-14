@@ -10,8 +10,9 @@ namespace bank.Core
     {
         public string Id { get; }
         public string Name { get; }
+        public string PIN { get; private set; }
         public List<Account> Accounts { get; } = new();
-        public User(string id, string name)
+        public User(string id, string name, string pin)
         {
             if (string.IsNullOrWhiteSpace(id))
                 Console.WriteLine(nameof(id), " missing or couldn't be fetched");
@@ -19,7 +20,10 @@ namespace bank.Core
                 Console.WriteLine(nameof(name), " missing or couldn't be fetched");
             Id = id;
             Name = name;
+            PIN = pin;
         }
+
+        public bool ValidatePIN(string pin) => PIN == pin;
     }
 
 }
