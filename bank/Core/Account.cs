@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 
 namespace bank.Core
 {
+
+    /// <summary>
+    /// //////////////////7
+    /// </summary>
     public class Account
     {
         public string AccountNumber { get; set; }
