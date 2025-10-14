@@ -8,7 +8,7 @@ namespace bank.Core
         {
             var menu = new Menu();
             menu.DrawUI();
-            menu.BankApp();
+            //menu.BankApp();
         }
     }
 }
