@@ -44,7 +44,7 @@ namespace bank.Core
                 Users.Add(user);
             } 
    
-            var account = new Account(accountNumber, user);
+            var account = new CheckingAccount(accountNumber, user);
             Accounts.Add(account);
             user.Accounts.Add(account);
             Console.WriteLine($"Bank: Kontot: {account.AccountNumber}  har skapats till användar ID: {user.Id} \n");
