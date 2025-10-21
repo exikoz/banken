@@ -1,7 +1,8 @@
-﻿using System;
+﻿using bank.Core;
+using System;
 using System.Linq;
 
-namespace bank.Core
+namespace bank.Services
 {
     /// <summary>
     /// Handles ALL authentication-related operations including UI
