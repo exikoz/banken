@@ -10,7 +10,7 @@ namespace bank.Core
     {
         public decimal OverdraftLimit { get; private set; }
 
-        public CheckingAccount(string accountNumber, User owner, decimal overdraftLimit = 1000 kr)
+        public CheckingAccount(string accountNumber, User owner, decimal overdraftLimit = 1000)
             : base(accountNumber, owner)
         {
             OverdraftLimit = overdraftLimit;
