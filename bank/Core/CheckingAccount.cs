@@ -56,7 +56,7 @@ namespace bank.Core
 
             Balance = projected;
 
-            // Log transaction (Transaction class exists in the project)
+            
             Transactions.Add(new Transaction(
                 id: Guid.NewGuid().ToString("N"),
                 accountNumber: AccountNumber,
@@ -68,7 +68,6 @@ namespace bank.Core
             Console.WriteLine($"\nWithdraw succeeded: {amount} kr. New balance = {Balance} kr.");
         }
 
-        // Deposit() from Account is sufficient; override only if special behavior is needed.
-        // public override void Deposit(decimal amount) => base.Deposit(amount);
+       
     }
 }

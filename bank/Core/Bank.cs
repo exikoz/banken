@@ -43,7 +43,8 @@ namespace bank.Core
             {
                 Users.Add(user);
             } 
-   
+         // Create new CheckingAccount by default INSTEAD OF SAVINGSACCOUNT 
+         
             var account = new CheckingAccount(accountNumber, user);
             Accounts.Add(account);
             user.Accounts.Add(account);
