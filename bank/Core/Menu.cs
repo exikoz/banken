@@ -30,21 +30,20 @@ namespace bank.Core
 
         private void SeedTestData()
         {
-            // Create test users
+            // --- Create test users ---
             var user1 = new User("U001", "Alexander", "1234");
             var user2 = new User("U002", "Maria", "5678");
             var admin = new User("ADMIN", "Admin User", "0000", UserRole.Admin);
 
+            // --- Register them in the bank system ---
             bank.RegisterUser(user1);
             bank.RegisterUser(user2);
             bank.RegisterUser(admin);
 
-            // Create test accounts
-            // Alexander (U001) has ACC001 with 0 balance
-            bank.OpenAccount(user1, "ACC001");
-            // Maria (U002) has ACC002 with 0 balance
-            bank.OpenAccount(user2, "ACC002");
+            // --- No accounts created automatically ---
+            // Users can now create Savings or Checking accounts manually via menu
         }
+
 
         public void DrawUI()
         {
@@ -125,8 +124,9 @@ namespace bank.Core
             Console.WriteLine("2. Deposit Money");
             Console.WriteLine("3. Withdraw Money");
             Console.WriteLine("4. Open New Account");
-            Console.WriteLine("5. Log Out");
-            Console.WriteLine("6. Exit");
+            Console.WriteLine("5. Calculate Interest");
+            Console.WriteLine("6. Log Out");
+            Console.WriteLine("7. Exit");
             Console.Write("\nChoose option: ");
 
             var choice = Console.ReadLine();
@@ -146,11 +146,14 @@ namespace bank.Core
                     accountService.CreateAccount(currentUser!);
                     break;
                 case "5":
+                    CalculateInterestUI();
+                    break;
+                case "6":
                     currentUser = null;
                     Console.WriteLine("\nSuccessfully logged out. Press any key to return to the welcome screen.");
                     Console.ReadKey();
                     break;
-                case "6":
+                case "7":
                     Environment.Exit(0);
                     break;
                 default:
@@ -193,5 +196,52 @@ namespace bank.Core
                     break;
             }
         }
+
+        private void CalculateInterestUI()
+        {
+            if (currentUser == null)
+            {
+                Console.WriteLine("\nYou must be logged in to use this feature.\n");
+                Console.ReadKey();
+                return;
+            }
+
+            Console.Write("\nEnter your savings account number: ");
+            string accountNumber = Console.ReadLine();
+
+            var savings = bank.Accounts
+                .OfType<SavingsAccount>()
+                .FirstOrDefault(a => a.AccountNumber.Equals(accountNumber, StringComparison.OrdinalIgnoreCase)
+                                  && a.Owner == currentUser);
+
+            if (savings == null)
+            {
+                Console.WriteLine("\nNo savings account found for this user.\n");
+                Console.ReadKey();
+                return;
+            }
+
+            Console.Write("Enter annual interest rate (%): ");
+            if (!decimal.TryParse(Console.ReadLine(), out decimal rate))
+            {
+                Console.WriteLine("\nInvalid input.\n");
+                Console.ReadKey();
+                return;
+            }
+
+            Console.Write("Enter number of months: ");
+            if (!int.TryParse(Console.ReadLine(), out int months))
+            {
+                Console.WriteLine("\nInvalid input.\n");
+                Console.ReadKey();
+                return;
+            }
+
+            savings.CalculateFutureBalance(rate, months);
+
+            Console.WriteLine("\nPress any key to continue...");
+            Console.ReadKey();
+        }
+
     }
 }

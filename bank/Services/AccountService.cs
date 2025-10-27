@@ -48,9 +48,8 @@ namespace bank.Services
             Console.ReadKey();
         }
 
-        /// <summary>
-        /// Creates a new account for the user
-        /// </summary>
+
+        // Skapar nytt konto och låter användaren välja kontotyp
         public void CreateAccount(User currentUser)
         {
             Console.Clear();
@@ -73,14 +72,37 @@ namespace bank.Services
                 return;
             }
 
-            bank.OpenAccount(currentUser, accountNumber);
-            Console.WriteLine($"\n✓ Account {accountNumber} created successfully!");
+            // Fråga om kontotyp
+            Console.WriteLine("\nSelect account type:");
+            Console.WriteLine("1. Savings Account");
+            Console.WriteLine("2. Checking Account");
+            Console.Write("\nChoose option: ");
+            var choice = Console.ReadLine();
+
+            string accountType;
+            switch (choice)
+            {
+                case "1":
+                    accountType = "savings";
+                    break;
+                case "2":
+                    accountType = "checking";
+                    break;
+                default:
+                    Console.WriteLine("\n✗ Invalid choice. Account not created.");
+                    Console.ReadKey();
+                    return;
+            }
+
+            // Skapa konto via Bank.OpenAccount()
+            bank.OpenAccount(currentUser, accountNumber, accountType);
+
+            Console.WriteLine($"\n✓ {accountType.ToUpper()} account {accountNumber} created successfully!");
+            Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
         }
 
-        /// <summary>
-        /// Handles deposit operation
-        /// </summary>
+        // Handles deposit operation
         public void Deposit(User currentUser)
         {
             Console.Clear();
@@ -92,19 +114,28 @@ namespace bank.Services
             Console.Write("Amount to deposit: ");
             if (decimal.TryParse(Console.ReadLine(), out var amount))
             {
-                account.Deposit(amount);
+                if (amount <= 0)
+                {
+                    Console.WriteLine("\n✗ Deposit amount must be greater than zero!");
+                }
+                else
+                {
+                    account.Deposit(amount);
+                    Console.WriteLine($"\n✓ Successfully deposited {amount:C} to account {account.AccountNumber}.");
+                }
             }
             else
             {
-                Console.WriteLine("\n✗ Invalid amount!");
+                Console.WriteLine("\n✗ Invalid input — please enter a number.");
             }
 
+            Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
         }
 
-        /// <summary>
+
+
         /// Handles withdrawal operation
-        /// </summary>
         public void Withdraw(User currentUser)
         {
             Console.Clear();

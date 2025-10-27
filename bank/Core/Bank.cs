@@ -51,6 +51,33 @@ namespace bank.Core
             return account;
         }
 
+        public Account OpenAccount(User user, string accountNumber, string accountType)
+        {
+            Account account;
+
+            switch (accountType.ToLower())
+            {
+                case "savings":
+                    account = new SavingsAccount(accountNumber, user);
+                    break;
+
+                case "checking":
+                    account = new CheckingAccount(accountNumber, user);
+                    break;
+
+                default:
+                    account = new Account(accountNumber, user);
+                    break;
+            }
+
+            Accounts.Add(account);
+            user.Accounts.Add(account);
+
+            Console.WriteLine($"Bank: {accountType}-account {account.AccountNumber} created for user {user.Id}");
+            return account;
+        }
+
+
         public void RegisterUser(User user)
         {
             if (!Users.Any(u => u.Id == user.Id))
