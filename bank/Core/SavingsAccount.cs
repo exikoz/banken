@@ -9,7 +9,7 @@ namespace bank.Core
     
     public class SavingsAccount : Account
     {
-        private int freeWithdrawals = 5;
+        private int freeWithdrawals = 3;
         private decimal fee = 15;
         private List<Transaction> transactions = new List<Transaction>();
         private static int transactionCounter = 0;
@@ -64,5 +64,38 @@ namespace bank.Core
             transactions.Add(tx);
             Console.WriteLine($"Withdrew {amount:C}. Balance: {Balance:C}");
         }
+
+    
+
+        // Enkel ränta, räkna ut saldo
+
+        public decimal CalculateFutureBalance(decimal annualInterestRate, int months)
+        {
+            // Säkerhet: inga negativa värden
+            if (annualInterestRate < 0 || months < 0)
+            {
+                Console.WriteLine("\nError: interest rate and months must be positive values.\n");
+                return Balance;
+            }
+
+            // Formel för enkel ränta:
+            // Ränta = saldo * (räntesats / 100) * (månader / 12)
+            decimal interest = Balance * (annualInterestRate / 100) * (months / 12m);
+
+            // Nya beräknade saldo
+            decimal futureBalance = Balance + interest;
+
+            // Skriv ut resultat i konsolen
+            Console.WriteLine($"\nSimple interest calculation:");
+            Console.WriteLine($"Current balance: {Balance:C}");
+            Console.WriteLine($"Annual interest rate: {annualInterestRate}%");
+            Console.WriteLine($"Period: {months} months");
+            Console.WriteLine($"Interest earned: {interest:C}");
+            Console.WriteLine($"Future balance: {futureBalance:C}\n");
+
+            // Returnera framtida saldo
+            return futureBalance;
+        }
+
     }
- }
+}

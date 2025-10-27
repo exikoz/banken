@@ -24,11 +24,12 @@ namespace bank.Core
             }
 
             // Tillåter övertrassering ned till OverdraftLimit
-            if (Balance - amount < OverdraftLimit)
+            if (Balance - amount < -OverdraftLimit)
             {
-                Console.WriteLine($"\nWithdraw failed: Overdraft limit of {OverdraftLimit} kr exceeded.");
+                Console.WriteLine($"\nWithdraw failed: Overdraft limit of {-OverdraftLimit} kr exceeded.");
                 return;
             }
+
 
             Balance -= amount;
 
@@ -45,4 +46,3 @@ namespace bank.Core
         }
     }
 }
-
