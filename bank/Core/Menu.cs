@@ -1,9 +1,5 @@
 ﻿using bank.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using bank.Utils;
 
 namespace bank.Core
 {
@@ -34,7 +30,7 @@ namespace bank.Core
 
 
 
-            SeedTestData();
+            DataSeeder.SeedTestData(bank);
         }
 
         private void SeedTestData()
@@ -115,7 +111,6 @@ namespace bank.Core
         {
             Console.WriteLine($"--- Welcome, {currentUser!.Name} ({currentUser.Id}) [{currentUser.Role}] ---");
 
-            // NEW: Show different menu based on role
             if (currentUser.IsAdmin())
             {
                 ShowAdminMenu();
@@ -126,7 +121,6 @@ namespace bank.Core
             }
         }
 
-        // NEW: Separate menu for customers
         private void ShowCustomerMenu()
         {
             Console.WriteLine("\n1. View My Accounts (Balance)");
@@ -181,7 +175,6 @@ namespace bank.Core
 
         }
 
-        // NEW: Separate menu for admins
         private void ShowAdminMenu()
         {
             Console.WriteLine("\n1. Admin Dashboard");
@@ -214,6 +207,30 @@ namespace bank.Core
                     break;
             }
         }
+        private void DoTransfer()
+{
+    Console.Write("\nFrom account number: ");
+    var from = Console.ReadLine()?.Trim();
+
+    Console.Write("To account number: ");
+    var to = Console.ReadLine()?.Trim();
+
+    Console.Write("Amount (kr): ");
+    var amountRaw = Console.ReadLine();
+
+    if (!decimal.TryParse(amountRaw, out var amount))
+    {
+        Console.WriteLine("✗ Invalid amount.");
+        Console.ReadKey();
+        return;
+    }
+
+    var ok = bank.Transfer(currentUser!, from!, to!, amount);
+    Console.WriteLine(ok ? "✓ Transfer completed." : "✗ Transfer failed.");
+    Console.WriteLine("Press any key to continue...");
+    Console.ReadKey();
+}
+
 
         
 
