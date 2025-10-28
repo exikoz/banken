@@ -3,9 +3,6 @@ using bank.Utils;
 
 namespace bank.Core
 {
-    /// <summary>
-    /// Main menu orchestrator - handles overall application flow and delegates to specialized services
-    /// </summary>
     public class Menu
     {
         private readonly Bank bank;
@@ -14,6 +11,9 @@ namespace bank.Core
         private readonly AdminService adminService;
         private User? currentUser;
         private readonly TransactionService transactionService;
+        private readonly InterestService interestService;
+
+
 
 
         public Menu()
@@ -23,6 +23,7 @@ namespace bank.Core
             accountService = new AccountService(bank);
             adminService = new AdminService(bank);
             transactionService = new TransactionService(bank);
+            interestService = new InterestService(bank);
 
 
             DataSeeder.SeedTestData(bank);
@@ -145,7 +146,7 @@ namespace bank.Core
                     accountService.CreateAccount(currentUser!);
                     break;
                 case "5":
-                    CalculateInterestUI();
+                    interestService.CalculateInterest(currentUser!);
                     break;
                 case "6":
                     transactionService.ShowTransactionLog(currentUser!);
@@ -199,51 +200,7 @@ namespace bank.Core
             }
         }
 
-        private void CalculateInterestUI()
-        {
-            if (currentUser == null)
-            {
-                Console.WriteLine("\nYou must be logged in to use this feature.\n");
-                Console.ReadKey();
-                return;
-            }
-
-            Console.Write("\nEnter your savings account number: ");
-            string accountNumber = Console.ReadLine();
-
-            var savings = bank.Accounts
-                .OfType<SavingsAccount>()
-                .FirstOrDefault(a => a.AccountNumber.Equals(accountNumber, StringComparison.OrdinalIgnoreCase)
-                                  && a.Owner == currentUser);
-
-            if (savings == null)
-            {
-                Console.WriteLine("\nNo savings account found for this user.\n");
-                Console.ReadKey();
-                return;
-            }
-
-            Console.Write("Enter annual interest rate (%): ");
-            if (!decimal.TryParse(Console.ReadLine(), out decimal rate))
-            {
-                Console.WriteLine("\nInvalid input.\n");
-                Console.ReadKey();
-                return;
-            }
-
-            Console.Write("Enter number of months: ");
-            if (!int.TryParse(Console.ReadLine(), out int months))
-            {
-                Console.WriteLine("\nInvalid input.\n");
-                Console.ReadKey();
-                return;
-            }
-
-            savings.CalculateFutureBalance(rate, months);
-
-            Console.WriteLine("\nPress any key to continue...");
-            Console.ReadKey();
-        }
+        
 
     }
 }
