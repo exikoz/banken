@@ -25,15 +25,16 @@ namespace bank.Core
             return Accounts.FirstOrDefault(a => a.AccountNumber == accountNumber); 
         }
 
-        public Account OpenAccount(User user, string accountNumber)
+        public Account OpenAccount(User user, string accountNumber, string accountType = "checking")
         {
            
-            if (string.IsNullOrWhiteSpace(accountNumber)) Console.WriteLine($"Bank: Kontonummer måste innehålla något. Du skrev in: {accountNumber} \n ");
-            if (user == null) Console.WriteLine("Bank: User kunde inte hittas!");
+            if (user == null)
+            {
+                Console.WriteLine("Bank: User not found.");
+                return null;
+            }
 
-            if (FindAccount(accountNumber) == null)
-                Console.WriteLine($"Bank: Kontot: {accountNumber} är godkänt. \n");
-            else
+            if (FindAccount(accountNumber) != null)
             {
                 Console.WriteLine($"Bank: Kontot: {accountNumber} är redan upptaget. \n");
             };
@@ -47,7 +48,8 @@ namespace bank.Core
             var account = new Account(accountNumber.Trim(), user);
             Accounts.Add(account);
             user.Accounts.Add(account);
-            Console.WriteLine($"Bank: Kontot: {account.AccountNumber}  har skapats till användar ID: {user.Id} \n");
+
+            Console.WriteLine($"Bank: {accountType} account {account.AccountNumber} created for user {user.Name}.");
             return account;
         }
 

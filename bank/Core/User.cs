@@ -19,7 +19,8 @@ namespace bank.Core
         public string Name { get; }
         public string PIN { get; private set; }
         public UserRole Role { get; set; }
-        public List<Account> Accounts { get; } = new();
+        public List<Account> Accounts { get; set; } = new();
+
         public User(string id, string name, string pin, UserRole role = UserRole.Customer)
         {
             if (string.IsNullOrWhiteSpace(id))
