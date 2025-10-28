@@ -25,5 +25,6 @@
             Type = type;
             Amount = amount;
         }
+  
     }
 }
