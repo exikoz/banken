@@ -1,9 +1,5 @@
 ﻿using bank.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using bank.Utils;
 
 namespace bank.Core
 {
@@ -25,26 +21,9 @@ namespace bank.Core
             accountService = new AccountService(bank);
             adminService = new AdminService(bank);
 
-            SeedTestData();
+            DataSeeder.SeedTestData(bank);
         }
 
-        private void SeedTestData()
-        {
-            // Create test users
-            var user1 = new User("U001", "Alexander", "1234");
-            var user2 = new User("U002", "Maria", "5678");
-            var admin = new User("ADMIN", "Admin User", "0000", UserRole.Admin);
-
-            bank.RegisterUser(user1);
-            bank.RegisterUser(user2);
-            bank.RegisterUser(admin);
-
-            // Create test accounts
-            // Alexander (U001) has ACC001 with 0 balance
-            bank.OpenAccount(user1, "ACC001");
-            // Maria (U002) has ACC002 with 0 balance
-            bank.OpenAccount(user2, "ACC002");
-        }
 
         public void DrawUI()
         {
@@ -107,7 +86,6 @@ namespace bank.Core
         {
             Console.WriteLine($"--- Welcome, {currentUser!.Name} ({currentUser.Id}) [{currentUser.Role}] ---");
 
-            // NEW: Show different menu based on role
             if (currentUser.IsAdmin())
             {
                 ShowAdminMenu();
@@ -118,7 +96,6 @@ namespace bank.Core
             }
         }
 
-        // NEW: Separate menu for customers
         private void ShowCustomerMenu()
         {
             Console.WriteLine("\n1. View My Accounts (Balance)");
@@ -160,7 +137,6 @@ namespace bank.Core
             }
         }
 
-        // NEW: Separate menu for admins
         private void ShowAdminMenu()
         {
             Console.WriteLine("\n1. Admin Dashboard");
