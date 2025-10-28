@@ -42,9 +42,9 @@ namespace bank.Core
             if (!Users.Contains(user)) 
             {
                 Users.Add(user);
-            } 
-   
-            var account = new Account(accountNumber, user);
+            }
+
+            var account = new Account(accountNumber.Trim(), user);
             Accounts.Add(account);
             user.Accounts.Add(account);
             Console.WriteLine($"Bank: Kontot: {account.AccountNumber}  har skapats till användar ID: {user.Id} \n");
@@ -58,16 +58,17 @@ namespace bank.Core
             switch (accountType.ToLower())
             {
                 case "savings":
-                    account = new SavingsAccount(accountNumber, user);
+                    account = new SavingsAccount(accountNumber.Trim(), user);
                     break;
 
                 case "checking":
-                    account = new CheckingAccount(accountNumber, user);
+                    account = new CheckingAccount(accountNumber.Trim(), user);
                     break;
 
                 default:
-                    account = new Account(accountNumber, user);
+                    account = new Account(accountNumber.Trim(), user);
                     break;
+                    ;
             }
 
             Accounts.Add(account);

@@ -19,37 +19,27 @@ namespace bank.Services
             Console.Clear();
             Console.WriteLine("=== TRANSACTION LOG ===\n");
 
-            if (currentUser == null || !currentUser.Accounts.Any())
-            {
-                Console.WriteLine("No accounts found for this user.");
-                Console.WriteLine("\nPress any key to return...");
-                Console.ReadKey();
-                return;
-            }
-
-            var allTransactions = currentUser.Accounts
-                .SelectMany(a => a.Transactions)
-                .OrderByDescending(t => t.TimeStamp)
-                .ToList();
-
-            if (!allTransactions.Any())
-            {
-                Console.WriteLine("No transactions found for this user.");
-                Console.WriteLine("\nPress any key to return...");
-                Console.ReadKey();
-                return;
-            }
-
-            Console.WriteLine("Date and Time           | Type        | Amount     | Account");
-            Console.WriteLine("--------------------------------------------------------------");
+            Console.WriteLine($"{"Date and Time",-22} | {"Type",-10} | {"Amount",15} | {"Account",-10} | {"Account Type",-12}");
+            Console.WriteLine(new string('-', 80)); // gör linjen lika lång som kolumnerna
 
             foreach (var t in allTransactions)
             {
-                Console.WriteLine($"{t.TimeStamp,-23:G} | {t.Type,-10} | {t.Amount,10:C} | {t.AccountNumber}");
+                var account = currentUser.Accounts
+                    .FirstOrDefault(a => a.AccountNumber.Trim().Equals(t.AccountNumber.Trim(), StringComparison.OrdinalIgnoreCase));
+
+                string accountType = account is SavingsAccount ? "Savings" :
+                                     account is CheckingAccount ? "Checking" : "Other";
+
+                // Justerade kolumnbredder för perfekt alignment
+                Console.WriteLine($"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} | {t.Type,-10} | {t.Amount,15:C} | {t.AccountNumber,-10} | {accountType,-12}");
             }
 
+            Console.WriteLine(new string('-', 80)); // avslutande linje
             Console.WriteLine("\nPress any key to return to menu...");
             Console.ReadKey();
+
+
         }
+
     }
 }
