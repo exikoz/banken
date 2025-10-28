@@ -17,6 +17,8 @@ namespace bank.Core
         private readonly AccountService accountService;
         private readonly AdminService adminService;
         private User? currentUser;
+        private readonly TransactionService transactionService;
+
 
         public Menu()
         {
@@ -24,6 +26,8 @@ namespace bank.Core
             authService = new AuthenticationService(bank);
             accountService = new AccountService(bank);
             adminService = new AdminService(bank);
+            transactionService = new TransactionService(bank);
+
 
             SeedTestData();
         }
@@ -125,8 +129,9 @@ namespace bank.Core
             Console.WriteLine("3. Withdraw Money");
             Console.WriteLine("4. Open New Account");
             Console.WriteLine("5. Calculate Interest");
-            Console.WriteLine("6. Log Out");
-            Console.WriteLine("7. Exit");
+            Console.WriteLine("6. View Transaction Log");
+            Console.WriteLine("7. Log Out");
+            Console.WriteLine("8. Exit");
             Console.Write("\nChoose option: ");
 
             var choice = Console.ReadLine();
@@ -149,11 +154,14 @@ namespace bank.Core
                     CalculateInterestUI();
                     break;
                 case "6":
+                    transactionService.ShowTransactionLog(currentUser!);
+                    break;
+                case "7":
                     currentUser = null;
                     Console.WriteLine("\nSuccessfully logged out. Press any key to return to the welcome screen.");
                     Console.ReadKey();
                     break;
-                case "7":
+                case "8":
                     Environment.Exit(0);
                     break;
                 default:
@@ -161,6 +169,7 @@ namespace bank.Core
                     Console.ReadKey();
                     break;
             }
+
         }
 
         // NEW: Separate menu for admins
