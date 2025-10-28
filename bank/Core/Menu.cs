@@ -125,8 +125,9 @@ namespace bank.Core
             Console.WriteLine("4. Open New Account");
             Console.WriteLine("5. Calculate Interest");
             Console.WriteLine("6. View Transaction Log");
-            Console.WriteLine("7. Log Out");
-            Console.WriteLine("8. Exit");
+            Console.WriteLine("7. Transfer Money");
+            Console.WriteLine("8. Log Out");
+            Console.WriteLine("9. Exit");
             Console.Write("\nChoose option: ");
 
             var choice = Console.ReadLine();
@@ -151,12 +152,15 @@ namespace bank.Core
                 case "6":
                     transactionService.ShowTransactionLog(currentUser!);
                     break;
-                case "7":
+                    case "7":
+                    DoTransfer();
+                    break;
+                case "8":
                     currentUser = null;
                     Console.WriteLine("\nSuccessfully logged out. Press any key to return to the welcome screen.");
                     Console.ReadKey();
                     break;
-                case "8":
+                case "9":
                     Environment.Exit(0);
                     break;
                 default:
@@ -199,6 +203,30 @@ namespace bank.Core
                     break;
             }
         }
+        private void DoTransfer()
+{
+    Console.Write("\nFrom account number: ");
+    var from = Console.ReadLine()?.Trim();
+
+    Console.Write("To account number: ");
+    var to = Console.ReadLine()?.Trim();
+
+    Console.Write("Amount (kr): ");
+    var amountRaw = Console.ReadLine();
+
+    if (!decimal.TryParse(amountRaw, out var amount))
+    {
+        Console.WriteLine("✗ Invalid amount.");
+        Console.ReadKey();
+        return;
+    }
+
+    var ok = bank.Transfer(currentUser!, from!, to!, amount);
+    Console.WriteLine(ok ? "✓ Transfer completed." : "✗ Transfer failed.");
+    Console.WriteLine("Press any key to continue...");
+    Console.ReadKey();
+}
+
 
         
 
