@@ -42,42 +42,15 @@ namespace bank.Core
             if (!Users.Contains(user)) 
             {
                 Users.Add(user);
-            }
-
-            var account = new Account(accountNumber.Trim(), user);
+            } 
+         // Create new CheckingAccount by default INSTEAD OF SAVINGSACCOUNT 
+         
+            var account = new CheckingAccount(accountNumber, user);
             Accounts.Add(account);
             user.Accounts.Add(account);
             Console.WriteLine($"Bank: Kontot: {account.AccountNumber}  har skapats till användar ID: {user.Id} \n");
             return account;
         }
-
-        public Account OpenAccount(User user, string accountNumber, string accountType)
-        {
-            Account account;
-
-            switch (accountType.ToLower())
-            {
-                case "savings":
-                    account = new SavingsAccount(accountNumber.Trim(), user);
-                    break;
-
-                case "checking":
-                    account = new CheckingAccount(accountNumber.Trim(), user);
-                    break;
-
-                default:
-                    account = new Account(accountNumber.Trim(), user);
-                    break;
-                    ;
-            }
-
-            Accounts.Add(account);
-            user.Accounts.Add(account);
-
-            Console.WriteLine($"Bank: {accountType}-account {account.AccountNumber} created for user {user.Id}");
-            return account;
-        }
-
 
         public void RegisterUser(User user)
         {
