@@ -25,34 +25,6 @@ namespace bank.Core
             return Accounts.FirstOrDefault(a => a.AccountNumber == accountNumber); 
         }
 
-        public Account OpenAccount(User user, string accountNumber, string accountType = "checking")
-        {
-           
-            if (user == null)
-            {
-                Console.WriteLine("Bank: User not found.");
-                return null;
-            }
-
-            if (FindAccount(accountNumber) != null)
-            {
-                Console.WriteLine($"Bank: Kontot: {accountNumber} är redan upptaget. \n");
-            };
-            
-            
-            if (!Users.Contains(user)) 
-            {
-                Users.Add(user);
-            }
-
-            var account = new Account(accountNumber.Trim(), user);
-            Accounts.Add(account);
-            user.Accounts.Add(account);
-
-            Console.WriteLine($"Bank: {accountType} account {account.AccountNumber} created for user {user.Name}.");
-            return account;
-        }
-
         public Account OpenAccount(User user, string accountNumber, string accountType)
         {
             Account account;
