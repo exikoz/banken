@@ -16,6 +16,7 @@ namespace bank.Core
         private User? currentUser;
         private readonly TransactionService transactionService;
         private readonly InterestService interestService;
+        private readonly LoanService loanService;
 
 
 
@@ -28,6 +29,8 @@ namespace bank.Core
             adminService = new AdminService(bank);
             transactionService = new TransactionService(bank);
             interestService = new InterestService(bank);
+            loanService = new LoanService(bank);
+
 
 
             SeedTestData();
@@ -131,8 +134,9 @@ namespace bank.Core
             Console.WriteLine("4. Open New Account");
             Console.WriteLine("5. Calculate Interest");
             Console.WriteLine("6. View Transaction Log");
-            Console.WriteLine("7. Log Out");
-            Console.WriteLine("8. Exit");
+            Console.WriteLine("7. Loan money");
+            Console.WriteLine("8. Log Out");
+            Console.WriteLine("9. Exit");
             Console.Write("\nChoose option: ");
 
             var choice = Console.ReadLine();
@@ -158,11 +162,14 @@ namespace bank.Core
                     transactionService.ShowTransactionLog(currentUser!);
                     break;
                 case "7":
+                    loanService.OfferLoanUI(currentUser!);
+                    break;
+                case "8":
                     currentUser = null;
                     Console.WriteLine("\nSuccessfully logged out. Press any key to return to the welcome screen.");
                     Console.ReadKey();
                     break;
-                case "8":
+                case "9":
                     Environment.Exit(0);
                     break;
                 default:
