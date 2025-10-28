@@ -20,7 +20,12 @@ namespace bank.Services
             Console.WriteLine("=== TRANSACTION LOG ===\n");
 
             Console.WriteLine($"{"Date and Time",-22} | {"Type",-10} | {"Amount",15} | {"Account",-10} | {"Account Type",-12}");
-            Console.WriteLine(new string('-', 80)); // gör linjen lika lång som kolumnerna
+            Console.WriteLine(new string('-', 80));
+
+            var allTransactions = currentUser.Accounts
+                .SelectMany(a => a.Transactions)
+                .OrderByDescending(t => t.TimeStamp)
+                .ToList();
 
             foreach (var t in allTransactions)
             {
@@ -30,9 +35,9 @@ namespace bank.Services
                 string accountType = account is SavingsAccount ? "Savings" :
                                      account is CheckingAccount ? "Checking" : "Other";
 
-                // Justerade kolumnbredder för perfekt alignment
                 Console.WriteLine($"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} | {t.Type,-10} | {t.Amount,15:C} | {t.AccountNumber,-10} | {accountType,-12}");
             }
+
 
             Console.WriteLine(new string('-', 80)); // avslutande linje
             Console.WriteLine("\nPress any key to return to menu...");
