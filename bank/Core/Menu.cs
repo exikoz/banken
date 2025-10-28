@@ -1,9 +1,5 @@
 ﻿using bank.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using bank.Utils;
 
 namespace bank.Core
 {
@@ -29,7 +25,7 @@ namespace bank.Core
             transactionService = new TransactionService(bank);
 
 
-            SeedTestData();
+            DataSeeder.SeedTestData(bank);
         }
 
         private void SeedTestData()
@@ -110,7 +106,6 @@ namespace bank.Core
         {
             Console.WriteLine($"--- Welcome, {currentUser!.Name} ({currentUser.Id}) [{currentUser.Role}] ---");
 
-            // NEW: Show different menu based on role
             if (currentUser.IsAdmin())
             {
                 ShowAdminMenu();
@@ -121,7 +116,6 @@ namespace bank.Core
             }
         }
 
-        // NEW: Separate menu for customers
         private void ShowCustomerMenu()
         {
             Console.WriteLine("\n1. View My Accounts (Balance)");
@@ -172,7 +166,6 @@ namespace bank.Core
 
         }
 
-        // NEW: Separate menu for admins
         private void ShowAdminMenu()
         {
             Console.WriteLine("\n1. Admin Dashboard");
