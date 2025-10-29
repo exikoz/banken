@@ -27,12 +27,28 @@ namespace bank.Services
             if (!currentUser.Accounts.Any())
             {
                 Console.WriteLine("You do not have any accounts yet.");
-                Console.WriteLine("\nWould you like to create one? (Press 'y' for yes)");
-                if (Console.ReadKey(true).KeyChar == 'y')
+                Console.Write("\nWould you like to open one? (Yes/No): ");
+
+                string? answer = Console.ReadLine()?.Trim().ToLower();
+
+                if (answer == "y" || answer == "yes")
                 {
                     CreateAccount(currentUser);
                     return;
                 }
+                else if (answer == "n" || answer == "no")
+                {
+                    Console.WriteLine("\nReturning to main menu...");
+                    Console.ReadKey();
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine("\nInvalid choice. Please type Yes or No.");
+                    Console.ReadKey();
+                    return;
+                }
+
             }
             else
             {
@@ -61,22 +77,9 @@ namespace bank.Services
             Console.Clear();
             Console.WriteLine("=== CREATE NEW ACCOUNT ===\n");
 
-            Console.Write("Enter account number (e.g., ACC123): ");
-            var accountNumber = Console.ReadLine();
+            // Kontonummer skapas automatiskt i Bank.OpenAccount()
+            // Ingen manuell inmatning krävs längre.
 
-            if (string.IsNullOrWhiteSpace(accountNumber))
-            {
-                Console.WriteLine("\n✗ Account number cannot be empty!");
-                Console.ReadKey();
-                return;
-            }
-
-            if (bank.FindAccount(accountNumber) != null)
-            {
-                Console.WriteLine("\n✗ Account number already exists!");
-                Console.ReadKey();
-                return;
-            }
 
             // Let the user choose account type
             Console.WriteLine("\nSelect account type:");
@@ -96,9 +99,9 @@ namespace bank.Services
             string accountType = choice == "1" ? "savings" : "checking";
 
             // Create the account using the selected type
-            bank.OpenAccount(currentUser, accountNumber, accountType);
+            var newAccount = bank.OpenAccount(currentUser, accountType);
+            Console.WriteLine($"\n✓ {accountType.ToUpper()} account {newAccount.AccountNumber} created successfully!");
 
-            Console.WriteLine($"\n✓ {accountType.ToUpper()} account {accountNumber} created successfully!");
             Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
 
@@ -166,7 +169,7 @@ namespace bank.Services
         {
             if (!currentUser.Accounts.Any())
             {
-                Console.WriteLine("You do not have any accounts!");
+                Console.WriteLine("You do not have any accounts yet.");
                 Console.ReadKey();
                 return null;
             }
