@@ -1,3 +1,23 @@
+Rapportmall
+
+Rapportör och datum: Joco 28/10 2025
+Deltagare (närvaro): Hussein, Alexander, Yasin, Joco
+Sprintmål (veckans DoD): Diskutera och bryta ner alla user storys. Fördela arbetet i Linear. Pusha i tid för att lösa potentiella hinder.
+Boka och säkerställa tid för Daily standup. Boka våra grupphandelningar ihop. Bestämt att när vi är "klara" tillsammans gå igenom hela backlogen ihop för att bekrögta alla funktioner visuellt.
+
+Problem/hinder: Vi diskuterade att tiden kommer gå snabbt och att vi har som målsättning att till måndag vara klara med alla krav, för att sedan prioritera rätt ingör tisdagens boiler room.
+Hålla komunikationen igång för att alltid jobba på den senaste versionen. Vara transparnta kring tidsåtgång och prioriteringar i vårt gemensamma arbete.
+
+
+
+Rapportör och datum: Joco 21/10 2025
+Deltagare (närvaro): Hussein, Alexander, Yasin, Joco
+Sprintmål (veckans DoD): Imorgon under checkpoint ska en i teamet dema projektet. Förbered enligt följande:
+
+Visa hur funktionerna för inloggad admin fungerar.
+Skriv rubriker och tomradsavskiljning så resultatet blir tydligt. Samt mycket mer utifrån veckans lista,
+Problem/hinder: Att arbeta med funktioner som berör någon annans arbete i en klass, utan hela tiden behöva pusha.
+
 
 Rapport
 - **Rapportör och datum: Joco 14/10 2025
