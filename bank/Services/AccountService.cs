@@ -59,8 +59,12 @@ namespace bank.Services
                                          account is SavingsAccount ? "Savings Account" :
                                          "Unknown Type";
 
+                    //Show Available incl. overdraft up to 1,000 for both types
+                    decimal overdraft = 1000m;
+                    decimal available = account.Balance + overdraft; 
+
                     Console.WriteLine($"Account: {account.AccountNumber} ({accountType})");
-                    Console.WriteLine($"Balance: {account.Balance:C}");
+                    Console.WriteLine($"Balance: {account.Balance:C}  |  Available: {available:C} (includes overdraft up to 1,000)"); // CHANGE
                     Console.WriteLine("─────────────────────");
                 }
 
@@ -149,10 +153,14 @@ namespace bank.Services
             var account = SelectAccount(currentUser);
             if (account == null) return;
 
+      
+            Console.WriteLine("(Info) You can withdraw up to your balance + 1,000.00 (overdraft)."); 
+
             Console.Write("Amount to withdraw: ");
             if (decimal.TryParse(Console.ReadLine(), out var amount))
             {
-                account.Withdraw(amount);
+                
+                account.Withdraw(amount); 
             }
             else
             {
@@ -183,7 +191,10 @@ namespace bank.Services
             Console.WriteLine("Select account:");
             for (int i = 0; i < currentUser.Accounts.Count; i++)
             {
-                Console.WriteLine($"{i + 1}. {currentUser.Accounts[i].AccountNumber} - Balance: {currentUser.Accounts[i].Balance:C}");
+                //For all accounts show Available (balance + 1,000 overdraft)
+                var acc = currentUser.Accounts[i]; 
+                decimal available = acc.Balance + 1000m;
+                Console.WriteLine($"{i + 1}. {acc.AccountNumber} - Balance: {acc.Balance:C} | Available: {available:C}"); // CHANGE
             }
 
             Console.Write("\nSelect: ");

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace bank.Core
 {
-    
+
     public class SavingsAccount : Account
     {
         private int freeWithdrawals = 3;
@@ -14,9 +14,7 @@ namespace bank.Core
         private List<Transaction> transactions = new List<Transaction>();
         private static int transactionCounter = 0;
 
-        public SavingsAccount(string accountNumber, User owner)
-            : base(accountNumber, owner, "Savings") { }
-
+        public SavingsAccount(string accountNumber, User owner) : base(accountNumber, owner) { }
 
         private string GenerateTransactionId()
         {
@@ -55,19 +53,36 @@ namespace bank.Core
                 Console.WriteLine($"Withdrawal fee of {fee:C} applied.");
             }
 
-            if (total > Balance)
+            //Allow overdraft down to -1,000 including any fee
+            const decimal overdraftLimit = 1000m;
+            decimal projected = Balance - total;  
+
+            if (projected < -overdraftLimit) 
             {
-                Console.WriteLine($"Not enough balance for withdrawal of {amount:C} (total with fee: {total:C})");
+                Console.WriteLine($"Not enough balance for withdrawal of {amount:C} (total with fee: {total:C}). You can overdraw up to {overdraftLimit:C}."); 
                 return;
             }
 
-            base.Withdraw(total);
-            var tx = new Transaction(GenerateTransactionId(), AccountNumber, DateTime.Now, "Withdraw", amount);
-            transactions.Add(tx);
-            Console.WriteLine($"Withdrew {amount:C}. Balance: {Balance:C}");
+           
+            Balance = projected; 
+
+           
+            var tx = new Transaction(GenerateTransactionId(), AccountNumber, DateTime.Now, "Withdraw", amount); 
+            transactions.Add(tx); 
+
+            // CHANGE: Also add to the shared Transactions list to keep parity with other accounts
+            Transactions.Add(new Transaction(
+                id: Guid.NewGuid().ToString("N"),
+                accountNumber: AccountNumber,
+                timeStamp: DateTime.UtcNow,
+                type: "Withdraw",
+                amount: amount
+            )); 
+
+            Console.WriteLine($"Withdrew {amount:C}. Balance: {Balance:C}"); 
         }
 
-    
+
 
         // Enkel ränta, räkna ut saldo
 
