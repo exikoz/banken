@@ -22,6 +22,7 @@ namespace bank.Services
             Console.WriteLine($"{"Date and Time",-22} | {"Type",-10} | {"Amount",15} | {"Account",-10} | {"Account Type",-12}");
             Console.WriteLine(new string('-', 80)); // gör linjen lika lång som kolumnerna
 
+            /*
             foreach (var t in allTransactions)
             {
                 var account = currentUser.Accounts
@@ -37,7 +38,7 @@ namespace bank.Services
             Console.WriteLine(new string('-', 80)); // avslutande linje
             Console.WriteLine("\nPress any key to return to menu...");
             Console.ReadKey();
-
+            */
 
         }
 

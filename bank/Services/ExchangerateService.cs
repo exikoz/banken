@@ -19,7 +19,6 @@ namespace bank.Services
 
         public void addRates()
         {
-            jsonHelper.
         }
 
     }

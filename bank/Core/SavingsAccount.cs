@@ -1,4 +1,5 @@
-﻿using System;
+﻿using bank.Attributes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,9 @@ namespace bank.Core
         private List<Transaction> transactions = new List<Transaction>();
         private static int transactionCounter = 0;
 
+
+
+
         public SavingsAccount(string accountNumber, User owner) : base(accountNumber, owner) { }
 
         private string GenerateTransactionId()
@@ -22,28 +26,22 @@ namespace bank.Core
             return $"TX-{AccountNumber}-{transactionCounter:D4}";
         }
 
+
+        [ValidateInput(Min ="10", Max = "1000")]
         public override void Deposit(decimal amount)
         {
-            if (amount <= 0)
-            {
-                Console.WriteLine("Deposit must be greater than 0.");
-                return;
-            }
-
             base.Deposit(amount);
             var tx = new Transaction(GenerateTransactionId(), AccountNumber, DateTime.Now, "Deposit", amount);
             transactions.Add(tx);
             Console.WriteLine($"Deposited {amount:C}. Balance: {Balance:C}");
         }
 
+
+
+
+
         public override void Withdraw(decimal amount)
         {
-            if (amount <= 0)
-            {
-                Console.WriteLine("Withdrawal must be greater than 0.");
-                return;
-            }
-
             decimal total = amount;
             if (freeWithdrawals > 0)
                 freeWithdrawals--;
