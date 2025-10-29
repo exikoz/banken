@@ -20,6 +20,10 @@ namespace bank.Core
         public string PIN { get; private set; }
         public UserRole Role { get; set; }
         public List<Account> Accounts { get; set; } = new();
+        public bool IsLocked { get; private set; } = false; // blir true när användaren blockeras
+        public void Lock() => IsLocked = true;              // blockera användaren
+        public void Unlock() => IsLocked = false;           // för admin senare om vi vill
+
 
         public User(string id, string name, string pin, UserRole role = UserRole.Customer)
         {

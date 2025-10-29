@@ -27,36 +27,42 @@ namespace bank.Core
             return Accounts.FirstOrDefault(a => a.AccountNumber == accountNumber);
         }
 
-        public Account OpenAccount(User user, string accountNumber)
+
+        public Account OpenAccount(User user, string accountType)
         {
-            if (string.IsNullOrWhiteSpace(accountNumber))
-                Console.WriteLine($"Bank: Kontonummer måste innehålla något. Du skrev in: {accountNumber} \n ");
-            if (user == null)
-                Console.WriteLine("Bank: User kunde inte hittas!");
-
-            if (FindAccount(accountNumber) == null)
-                Console.WriteLine($"Bank: Kontot: {accountNumber} är godkänt. \n");
-            else
-            {
-                Console.WriteLine($"Bank: Kontot: {accountNumber} är redan upptaget. \n");
-                // IMPORTANT: You may want to throw an exception here instead of continuing
-                // For simplicity, I'll allow the code to proceed, but this is a potential bug.
-            }
-            ;
-
-            // Register user if not already tracked by the bank
-            if (!Users.Contains(user))
-            {
+            // Säkerställ att användaren är registrerad
+            if (!Users.Any(u => u.Id == user.Id))
                 Users.Add(user);
+
+            // Ta bort "U" från användarens ID (ex: U003 → 003)
+            string numericId = user.Id.Replace("U", "").Trim();
+
+            // Skapa automatiskt kontonummer baserat på antal befintliga konton
+            string accountNumber = $"{numericId}-{user.Accounts.Count + 1:D2}";
+
+            Account account;
+
+            switch (accountType.ToLower().Trim())
+            {
+                case "savings":
+                    account = new SavingsAccount(accountNumber, user);
+                    break;
+                case "checking":
+                    account = new CheckingAccount(accountNumber, user);
+                    break;
+                default:
+                    account = new Account(accountNumber, user);
+                    break;
             }
 
-            // Create a default Account instance
-            var account = new Account(accountNumber.Trim(), user);
             Accounts.Add(account);
             user.Accounts.Add(account);
-            Console.WriteLine($"Bank: Kontot: {account.AccountNumber}  har skapats till användar ID: {user.Id} \n");
+
+            Console.WriteLine($"\n New {accountType} account created: {accountNumber}");
             return account;
         }
+
+
 
         public Account OpenAccount(User user, string accountNumber, string accountType)
         {
