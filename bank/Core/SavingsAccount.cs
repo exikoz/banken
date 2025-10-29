@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace bank.Core
 {
-    
     public class SavingsAccount : Account
     {
         private int freeWithdrawals = 3;
@@ -14,9 +13,8 @@ namespace bank.Core
         private List<Transaction> transactions = new List<Transaction>();
         private static int transactionCounter = 0;
 
-        public SavingsAccount(string accountNumber, User owner)
-            : base(accountNumber, owner, "Savings") { }
-
+        public SavingsAccount(string accountNumber, User owner, string accountType, string currency)
+            : base(accountNumber, owner, accountType, currency) { }
 
         private string GenerateTransactionId()
         {
@@ -33,9 +31,11 @@ namespace bank.Core
             }
 
             base.Deposit(amount);
+
             var tx = new Transaction(GenerateTransactionId(), AccountNumber, DateTime.Now, "Deposit", amount);
             transactions.Add(tx);
-            Console.WriteLine($"Deposited {amount:C}. Balance: {Balance:C}");
+
+            Console.WriteLine($"Deposited {amount} {Currency}. Balance: {Balance} {Currency}");
         }
 
         public override void Withdraw(decimal amount)
@@ -47,57 +47,68 @@ namespace bank.Core
             }
 
             decimal total = amount;
-            if (freeWithdrawals > 0)
-                freeWithdrawals--;
-            else
+            bool feeApplied = false;
+
+            // Kontrollera om avgift ska användas
+            if (freeWithdrawals <= 0)
             {
                 total += fee;
-                Console.WriteLine($"Withdrawal fee of {fee:C} applied.");
+                feeApplied = true;
             }
 
+            // Kontrollera saldo innan något dras
             if (total > Balance)
             {
-                Console.WriteLine($"Not enough balance for withdrawal of {amount:C} (total with fee: {total:C})");
+                if (feeApplied)
+                    Console.WriteLine($"Not enough balance for withdrawal of {amount} {Currency} (total with fee: {total} {Currency})");
+                else
+                    Console.WriteLine($"Not enough balance for withdrawal of {amount} {Currency}");
                 return;
             }
 
+            // Genomför uttaget
             base.Withdraw(total);
+
+            // Minska fria uttag först EFTER lyckat uttag
+            if (freeWithdrawals > 0)
+                freeWithdrawals--;
+
+            if (feeApplied)
+                Console.WriteLine($"Withdrawal fee of {fee} {Currency} applied.");
+
+            // Logga transaktion
             var tx = new Transaction(GenerateTransactionId(), AccountNumber, DateTime.Now, "Withdraw", amount);
             transactions.Add(tx);
-            Console.WriteLine($"Withdrew {amount:C}. Balance: {Balance:C}");
+
+            Console.WriteLine($"Withdrew {amount} {Currency}. Balance: {Balance} {Currency}");
+
+            // Visa återstående fria uttag
+            if (freeWithdrawals > 0)
+                Console.WriteLine($"You have {freeWithdrawals} free withdrawal(s) left.");
+            else
+                Console.WriteLine("No free withdrawals remaining — next withdrawal will include a fee.");
         }
 
-    
-
-        // Enkel ränta, räkna ut saldo
-
+        // Simple interest calculation
         public decimal CalculateFutureBalance(decimal annualInterestRate, int months)
         {
-            // Säkerhet: inga negativa värden
             if (annualInterestRate < 0 || months < 0)
             {
                 Console.WriteLine("\nError: interest rate and months must be positive values.\n");
                 return Balance;
             }
 
-            // Formel för enkel ränta:
-            // Ränta = saldo * (räntesats / 100) * (månader / 12)
             decimal interest = Balance * (annualInterestRate / 100) * (months / 12m);
-
-            // Nya beräknade saldo
             decimal futureBalance = Balance + interest;
 
-            // Skriv ut resultat i konsolen
             Console.WriteLine($"\nSimple interest calculation:");
-            Console.WriteLine($"Current balance: {Balance:C}");
+            Console.WriteLine($"Current balance: {Balance} {Currency}");
             Console.WriteLine($"Annual interest rate: {annualInterestRate}%");
             Console.WriteLine($"Period: {months} months");
-            Console.WriteLine($"Interest earned: {interest:C}");
-            Console.WriteLine($"Future balance: {futureBalance:C}\n");
+            Console.WriteLine($"Interest earned: {interest} {Currency}");
+            Console.WriteLine($"Future balance: {futureBalance} {Currency}\n");
 
-            // Returnera framtida saldo
             return futureBalance;
         }
-
     }
 }

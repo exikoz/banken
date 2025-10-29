@@ -5,68 +5,64 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-
 namespace bank.Core
 {
     public class Bank
     {
-
         public List<User> Users { get; } = new();
         public List<Account> Accounts { get; } = new();
 
-
         public Bank() { }
 
-        /// <summary>
-        /// Finds an account by its number.
-        /// </summary>
-        /// <param name="accountNumber"></param>
-        /// <returns></returns>
+        // Find account by number
         public Account? FindAccount(string accountNumber)
         {
             return Accounts.FirstOrDefault(a => a.AccountNumber == accountNumber);
         }
 
-
+        // Create account with currency selection
         public Account OpenAccount(User user, string accountType)
         {
-            // Säkerställ att användaren är registrerad
             if (!Users.Any(u => u.Id == user.Id))
                 Users.Add(user);
 
-            // Ta bort "U" från användarens ID (ex: U003 → 003)
             string numericId = user.Id.Replace("U", "").Trim();
-
-            // Skapa automatiskt kontonummer baserat på antal befintliga konton
             string accountNumber = $"{numericId}-{user.Accounts.Count + 1:D2}";
+
+            var currencies = new List<string> { "SEK", "EUR", "USD", "GBP", "NOK", "DKK" };
+            Console.WriteLine("\nSelect currency:");
+            for (int i = 0; i < currencies.Count; i++)
+                Console.WriteLine($"{i + 1}. {currencies[i]}");
+            Console.Write("Choice: ");
+            var choice = int.TryParse(Console.ReadLine(), out int c) && c >= 1 && c <= currencies.Count
+                ? currencies[c - 1]
+                : "SEK";
 
             Account account;
 
             switch (accountType.ToLower().Trim())
             {
                 case "savings":
-                    account = new SavingsAccount(accountNumber, user);
+                    account = new SavingsAccount(accountNumber, user, accountType, choice);
                     break;
                 case "checking":
-                    account = new CheckingAccount(accountNumber, user);
+                    account = new CheckingAccount(accountNumber, user, accountType, choice);
                     break;
                 default:
-                    account = new Account(accountNumber, user);
+                    account = new Account(accountNumber, user, accountType, choice);
                     break;
             }
 
             Accounts.Add(account);
             user.Accounts.Add(account);
 
-            Console.WriteLine($"\n New {accountType} account created: {accountNumber}");
+            Console.WriteLine($"\nNew {accountType} account created: {accountNumber} ({choice})");
             return account;
         }
 
-
-
+        // Create account with default SEK
         public Account OpenAccount(User user, string accountNumber, string accountType)
         {
-            // Register user if not already tracked by the bank
             if (!Users.Any(u => u.Id == user.Id))
                 Users.Add(user);
 
@@ -75,18 +71,13 @@ namespace bank.Core
             switch (accountType.ToLower().Trim())
             {
                 case "savings":
-                    // Assuming SavingsAccount exists and inherits from Account
-                    account = new SavingsAccount(accountNumber.Trim(), user);
+                    account = new SavingsAccount(accountNumber.Trim(), user, accountType, "SEK");
                     break;
-
                 case "checking":
-                    // Assuming CheckingAccount exists and inherits from Account
-                    account = new CheckingAccount(accountNumber.Trim(), user);
+                    account = new CheckingAccount(accountNumber.Trim(), user, accountType, "SEK");
                     break;
-
                 default:
-                    // Use the base Account class for unknown types
-                    account = new Account(accountNumber.Trim(), user);
+                    account = new Account(accountNumber.Trim(), user, accountType, "SEK");
                     break;
             }
 
@@ -97,27 +88,27 @@ namespace bank.Core
             return account;
         }
 
-
+        // Transfer between accounts
         public bool Transfer(User user, string fromAccountNumber, string toAccountNumber, decimal amount)
         {
             if (user == null)
             {
-                Console.WriteLine("Transfer: Ogiltig användare.");
+                Console.WriteLine("Transfer failed: Invalid user.");
                 return false;
             }
             if (string.IsNullOrWhiteSpace(fromAccountNumber) || string.IsNullOrWhiteSpace(toAccountNumber))
             {
-                Console.WriteLine("Transfer: Från- och till-kontonummer måste anges.");
+                Console.WriteLine("Transfer failed: Missing account numbers.");
                 return false;
             }
             if (fromAccountNumber == toAccountNumber)
             {
-                Console.WriteLine("Transfer: Kan inte överföra till samma konto.");
+                Console.WriteLine("Transfer failed: Cannot transfer to the same account.");
                 return false;
             }
             if (amount <= 0)
             {
-                Console.WriteLine("Transfer: Belopp måste vara > 0.");
+                Console.WriteLine("Transfer failed: Amount must be greater than zero.");
                 return false;
             }
 
@@ -126,19 +117,16 @@ namespace bank.Core
 
             if (from == null || to == null)
             {
-                Console.WriteLine("Transfer: Ett eller båda konton finns inte.");
+                Console.WriteLine("Transfer failed: One or both accounts not found.");
                 return false;
             }
 
-            // Säkerställ att båda kontona ägs av den inloggade användaren
-            // Note: This logic forces transfers only between the user's OWN accounts.
             if (from.Owner != user || to.Owner != user)
             {
-                Console.WriteLine("Transfer: Du kan endast föra över mellan dina egna konton.");
+                Console.WriteLine("Transfer failed: You can only transfer between your own accounts.");
                 return false;
             }
 
-            // Kontrollera täckning inkl. ev. övertrass på CheckingAccount
             bool hasCoverage;
             if (from is CheckingAccount ca)
                 hasCoverage = (from.Balance - amount) >= -ca.OverdraftLimit;
@@ -147,32 +135,33 @@ namespace bank.Core
 
             if (!hasCoverage)
             {
-                Console.WriteLine("Transfer: Otillräckliga medel (inkl. övertrasseringsgräns).");
+                Console.WriteLine("Transfer failed: Insufficient funds including overdraft limit.");
                 return false;
             }
 
-            // Använd befintliga regler för uttag/insättning så transaktioner loggas korrekt
             var before = from.Balance;
-            from.Withdraw(amount); // kommer att neka om interna regler inte uppfylls
+            from.Withdraw(amount);
             var withdrew = (from.Balance == before - amount);
 
             if (!withdrew)
             {
-                Console.WriteLine("Transfer: Uttaget misslyckades.");
+                Console.WriteLine("Transfer failed: Withdrawal failed.");
                 return false;
             }
 
             to.Deposit(amount);
-            Console.WriteLine($"Transfer: {amount} kr överfört från {fromAccountNumber} till {toAccountNumber}.");
+            Console.WriteLine($"Transfer succeeded: {amount} transferred from {fromAccountNumber} to {toAccountNumber}.");
             return true;
         }
 
+        // Register new user
         public void RegisterUser(User user)
         {
             if (!Users.Any(u => u.Id == user.Id))
                 Users.Add(user);
         }
 
+        // Find user by ID
         public User? FindUser(string userId) => Users.FirstOrDefault(u => u.Id == userId);
     }
 }
