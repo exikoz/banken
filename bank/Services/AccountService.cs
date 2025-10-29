@@ -38,10 +38,16 @@ namespace bank.Services
             {
                 foreach (var account in currentUser.Accounts)
                 {
-                    Console.WriteLine($"Account: {account.AccountNumber}");
+                    // Visa kontonummer och typ (Savings / Checking)
+                    string accountType = account is CheckingAccount ? "Checking Account" :
+                                         account is SavingsAccount ? "Savings Account" :
+                                         "Unknown Type";
+
+                    Console.WriteLine($"Account: {account.AccountNumber} ({accountType})");
                     Console.WriteLine($"Balance: {account.Balance:C}");
                     Console.WriteLine("─────────────────────");
                 }
+
             }
 
             Console.WriteLine("\nPress any key to continue...");
@@ -72,34 +78,30 @@ namespace bank.Services
                 return;
             }
 
-            // Fråga om kontotyp
+            // Let the user choose account type
             Console.WriteLine("\nSelect account type:");
             Console.WriteLine("1. Savings Account");
             Console.WriteLine("2. Checking Account");
             Console.Write("\nChoose option: ");
             var choice = Console.ReadLine();
 
-            string accountType;
-            switch (choice)
+            if (choice != "1" && choice != "2")
             {
-                case "1":
-                    accountType = "savings";
-                    break;
-                case "2":
-                    accountType = "checking";
-                    break;
-                default:
-                    Console.WriteLine("\n✗ Invalid choice. Account not created.");
-                    Console.ReadKey();
-                    return;
+                Console.WriteLine("\n✗ Invalid choice. Account not created.");
+                Console.ReadKey();
+                return;
             }
 
-            // Skapa konto via Bank.OpenAccount()
+            // Determine account type based on input
+            string accountType = choice == "1" ? "savings" : "checking";
+
+            // Create the account using the selected type
             bank.OpenAccount(currentUser, accountNumber, accountType);
 
             Console.WriteLine($"\n✓ {accountType.ToUpper()} account {accountNumber} created successfully!");
             Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
+
         }
 
         // Handles deposit operation

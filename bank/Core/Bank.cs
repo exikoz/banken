@@ -27,35 +27,7 @@ namespace bank.Core
             return Accounts.FirstOrDefault(a => a.AccountNumber == accountNumber);
         }
 
-        public Account OpenAccount(User user, string accountNumber)
-        {
-
-            if (string.IsNullOrWhiteSpace(accountNumber)) Console.WriteLine($"Bank: Kontonummer måste innehålla något. Du skrev in: {accountNumber} \n ");
-            if (user == null) Console.WriteLine("Bank: User kunde inte hittas!");
-
-            if (FindAccount(accountNumber) == null)
-                Console.WriteLine($"Bank: Kontot: {accountNumber} är godkänt. \n");
-            else
-            {
-                Console.WriteLine($"Bank: Kontot: {accountNumber} är redan upptaget. \n");
-            }
-            ;
-
-
-            if (!Users.Contains(user))
-            {
-                Users.Add(user);
-            } 
-         // Create new CheckingAccount by default INSTEAD OF SAVINGSACCOUNT 
-         
-            var account = new CheckingAccount(accountNumber, user);
-            Accounts.Add(account);
-            user.Accounts.Add(account);
-            Console.WriteLine($"Bank: Kontot: {account.AccountNumber}  har skapats till användar ID: {user.Id} \n");
-            return account;
-        }
-
-        public void RegisterUser(User user)
+        public Account OpenAccount(User user, string accountNumber, string accountType)
         {
             if (!Users.Any(u => u.Id == user.Id))
                 Users.Add(user);

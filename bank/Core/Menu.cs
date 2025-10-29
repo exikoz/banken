@@ -17,6 +17,7 @@ namespace bank.Core
 
 
 
+
         public Menu()
         {
             bank = new Bank();
@@ -128,7 +129,7 @@ namespace bank.Core
             Console.WriteLine("4. Open New Account");
             Console.WriteLine("5. Calculate Interest");
             Console.WriteLine("6. View Transaction Log");
-            Console.WriteLine("7. Loan money");
+            Console.WriteLine("7. Apply for Loan");
             Console.WriteLine("8. Log Out");
             Console.WriteLine("9. Exit");
             Console.Write("\nChoose option: ");
@@ -156,7 +157,7 @@ namespace bank.Core
                     transactionService.ShowTransactionLog(currentUser!);
                     break;
                 case "7":
-                    loanService.OfferLoanUI(currentUser!);
+                    loanService.ApplyForLoan(currentUser!);
                     break;
                 case "8":
                     currentUser = null;

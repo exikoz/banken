@@ -72,7 +72,7 @@ namespace bank.Services
             Console.WriteLine("\n✓ User registered successfully!");
 
             // Optionally create an account for the new user
-            OfferAccountCreation(newUser);
+            //OfferAccountCreation(newUser);
 
             Console.WriteLine("\nYou can now log in with your credentials.");
             Console.ReadKey();
@@ -177,26 +177,26 @@ namespace bank.Services
             return pin;
         }
 
-        /// <summary>
-        /// Offers the user to create an account immediately after registration
-        /// </summary>
-        private void OfferAccountCreation(User user)
-        {
-            Console.Write("\nWould you like to create an account? (y/n): ");
-            var createAccount = Console.ReadLine()?.ToLower();
+        ///// <summary>
+        ///// Offers the user to create an account immediately after registration
+        ///// </summary>
+        //private void OfferAccountCreation(User user)
+        //{
+        //    Console.Write("\nWould you like to create an account? (y/n): ");
+        //    var createAccount = Console.ReadLine()?.ToLower();
 
-            if (createAccount == "y" || createAccount == "yes")
-            {
-                Console.Write("Enter account number (e.g., ACC003): ");
-                var accountNumber = Console.ReadLine();
+        //    if (createAccount == "y" || createAccount == "yes")
+        //    {
+        //        Console.Write("Enter account number (e.g., ACC003): ");
+        //        var accountNumber = Console.ReadLine();
 
-                if (!string.IsNullOrWhiteSpace(accountNumber))
-                {
-                    bank.OpenAccount(user, accountNumber);
-                    Console.WriteLine($"\n✓ Account {accountNumber} created successfully!");
-                }
-            }
-        }
+        //        if (!string.IsNullOrWhiteSpace(accountNumber))
+        //        {
+        //            bank.OpenAccount(user, accountNumber);
+        //            Console.WriteLine($"\n✓ Account {accountNumber} created successfully!");
+        //        }
+        //    }
+        //}
 
         /// <summary>
         /// Reads password input with masked characters (asterisks)

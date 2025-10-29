@@ -14,7 +14,9 @@ namespace bank.Core
         private List<Transaction> transactions = new List<Transaction>();
         private static int transactionCounter = 0;
 
-        public SavingsAccount(string accountNumber, User owner) : base(accountNumber, owner) { }
+        public SavingsAccount(string accountNumber, User owner)
+            : base(accountNumber, owner, "Savings") { }
+
 
         private string GenerateTransactionId()
         {

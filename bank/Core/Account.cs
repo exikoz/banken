@@ -12,16 +12,20 @@ namespace bank.Core
         public string AccountNumber { get; set; }
         public decimal Balance { get; protected set; }
         public User Owner { get; set; }
+        public string AccountType { get; protected set; }
+
 
         // Transaction v40 - lista för att lagra transaktioner
         public List<Transaction> Transactions { get; } = new();
 
-        public Account(string accountNumber, User owner)
+        public Account(string accountNumber, User owner, string accountType = "Generic")
         {
             AccountNumber = accountNumber;
             Owner = owner;
             Balance = 0;
+            AccountType = accountType;
         }
+
 
         public virtual void Deposit(decimal amount)
         {
