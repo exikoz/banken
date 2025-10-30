@@ -48,13 +48,11 @@ namespace bank.Services
                     Console.ReadKey();
                     return;
                 }
-
             }
             else
             {
                 foreach (var account in currentUser.Accounts)
                 {
-                    // Visa kontonummer och typ (Savings / Checking)
                     string accountType = account is CheckingAccount ? "Checking Account" :
                                          account is SavingsAccount ? "Savings Account" :
                                          "Unknown Type";
@@ -64,28 +62,21 @@ namespace bank.Services
                     decimal available = account.Balance + overdraft; 
 
                     Console.WriteLine($"Account: {account.AccountNumber} ({accountType})");
-                    Console.WriteLine($"Balance: {account.Balance:C}  |  Available: {available:C} (includes overdraft up to 1,000)"); // CHANGE
+                    Console.WriteLine($"Balance: {account.Balance} {account.Currency}");
                     Console.WriteLine("─────────────────────");
                 }
-
             }
 
             Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
         }
 
-
-        // Skapar nytt konto och låter användaren välja kontotyp
+        // Create new account
         public void CreateAccount(User currentUser)
         {
             Console.Clear();
             Console.WriteLine("=== CREATE NEW ACCOUNT ===\n");
 
-            // Kontonummer skapas automatiskt i Bank.OpenAccount()
-            // Ingen manuell inmatning krävs längre.
-
-
-            // Let the user choose account type
             Console.WriteLine("\nSelect account type:");
             Console.WriteLine("1. Savings Account");
             Console.WriteLine("2. Checking Account");
@@ -99,19 +90,15 @@ namespace bank.Services
                 return;
             }
 
-            // Determine account type based on input
             string accountType = choice == "1" ? "savings" : "checking";
 
-            // Create the account using the selected type
             var newAccount = bank.OpenAccount(currentUser, accountType);
-            Console.WriteLine($"\n✓ {accountType.ToUpper()} account {newAccount.AccountNumber} created successfully!");
 
             Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
-
         }
 
-        // Handles deposit operation
+        // Deposit money
         public void Deposit(User currentUser)
         {
             Console.Clear();
@@ -120,7 +107,7 @@ namespace bank.Services
             var account = SelectAccount(currentUser);
             if (account == null) return;
 
-            Console.Write("Amount to deposit: ");
+            Console.Write($"Amount to deposit ({account.Currency}): ");
             if (decimal.TryParse(Console.ReadLine(), out var amount))
             {
                 if (amount <= 0)
@@ -130,7 +117,6 @@ namespace bank.Services
                 else
                 {
                     account.Deposit(amount);
-                    Console.WriteLine($"\n✓ Successfully deposited {amount:C} to account {account.AccountNumber}.");
                 }
             }
             else
@@ -142,9 +128,7 @@ namespace bank.Services
             Console.ReadKey();
         }
 
-
-
-        /// Handles withdrawal operation
+        // Withdraw money
         public void Withdraw(User currentUser)
         {
             Console.Clear();
@@ -153,10 +137,7 @@ namespace bank.Services
             var account = SelectAccount(currentUser);
             if (account == null) return;
 
-      
-            Console.WriteLine("(Info) You can withdraw up to your balance + 1,000.00 (overdraft)."); 
-
-            Console.Write("Amount to withdraw: ");
+            Console.Write($"Amount to withdraw ({account.Currency}): ");
             if (decimal.TryParse(Console.ReadLine(), out var amount))
             {
                 
@@ -170,9 +151,7 @@ namespace bank.Services
             Console.ReadKey();
         }
 
-        /// <summary>
-        /// Allows user to select an account from their list
-        /// </summary>
+        // Account selector
         private Account? SelectAccount(User currentUser)
         {
             if (!currentUser.Accounts.Any())
@@ -184,17 +163,16 @@ namespace bank.Services
 
             if (currentUser.Accounts.Count == 1)
             {
-                Console.WriteLine($"Using account: {currentUser.Accounts[0].AccountNumber}\n");
-                return currentUser.Accounts[0];
+                var acc = currentUser.Accounts[0];
+                Console.WriteLine($"Using account: {acc.AccountNumber} ({acc.Currency})\n");
+                return acc;
             }
 
             Console.WriteLine("Select account:");
             for (int i = 0; i < currentUser.Accounts.Count; i++)
             {
-                //For all accounts show Available (balance + 1,000 overdraft)
-                var acc = currentUser.Accounts[i]; 
-                decimal available = acc.Balance + 1000m;
-                Console.WriteLine($"{i + 1}. {acc.AccountNumber} - Balance: {acc.Balance:C} | Available: {available:C}"); // CHANGE
+                var acc = currentUser.Accounts[i];
+                Console.WriteLine($"{i + 1}. {acc.AccountNumber} - Balance: {acc.Balance} {acc.Currency}");
             }
 
             Console.Write("\nSelect: ");
