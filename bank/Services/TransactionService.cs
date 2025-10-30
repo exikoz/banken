@@ -19,32 +19,36 @@ namespace bank.Services
             Console.Clear();
             Console.WriteLine("=== TRANSACTION LOG ===\n");
 
-            Console.WriteLine($"{"Date and Time",-22} | {"Type",-10} | {"Amount",15} | {"Account",-10} | {"Account Type",-12}");
-            Console.WriteLine(new string('-', 80));
+            Console.WriteLine($"{"Date and Time",-22} | {"Type",-10} | {"Amount",-15} | {"Currency",-8} | {"Account",-10} | {"Account Type",-12}");
+            Console.WriteLine(new string('-', 90));
 
             var allTransactions = currentUser.Accounts
-                .SelectMany(a => a.Transactions)
-                .OrderByDescending(t => t.TimeStamp)
+                .SelectMany(a => a.Transactions.Select(t => new { Account = a, Transaction = t }))
+                .OrderByDescending(x => x.Transaction.TimeStamp)
                 .ToList();
 
-            foreach (var t in allTransactions)
+            if (!allTransactions.Any())
             {
-                var account = currentUser.Accounts
-                    .FirstOrDefault(a => a.AccountNumber.Trim().Equals(t.AccountNumber.Trim(), StringComparison.OrdinalIgnoreCase));
-
-                string accountType = account is SavingsAccount ? "Savings" :
-                                     account is CheckingAccount ? "Checking" : "Other";
-
-                Console.WriteLine($"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} | {t.Type,-10} | {t.Amount,15:C} | {t.AccountNumber,-10} | {accountType,-12}");
+                Console.WriteLine("No transactions found.");
+                Console.WriteLine("\nPress any key to return to menu...");
+                Console.ReadKey();
+                return;
             }
 
+            foreach (var x in allTransactions)
+            {
+                var a = x.Account;
+                var t = x.Transaction;
 
-            Console.WriteLine(new string('-', 80)); // avslutande linje
+                string accountType = a is SavingsAccount ? "Savings" :
+                                     a is CheckingAccount ? "Checking" : "Other";
+
+                Console.WriteLine($"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} | {t.Type,-10} | {t.Amount,-15} | {a.Currency,-8} | {a.AccountNumber,-10} | {accountType,-12}");
+            }
+
+            Console.WriteLine(new string('-', 90));
             Console.WriteLine("\nPress any key to return to menu...");
             Console.ReadKey();
-
-
         }
-
     }
 }

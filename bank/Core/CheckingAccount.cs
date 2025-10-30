@@ -12,8 +12,9 @@ namespace bank.Core
 
         public decimal AvailableFunds => Balance + OverdraftLimit;
 
-        public CheckingAccount(string accountNumber, User owner, decimal overdraftLimit = 1000m)
-            : base(accountNumber, owner)
+        public CheckingAccount(string accountNumber, User owner, string accountType, string currency, decimal overdraftLimit = 1000m)
+            : base(accountNumber, owner, accountType, currency)
+
         {
             if (string.IsNullOrWhiteSpace(accountNumber))
                 throw new ArgumentException("Account number is required.", nameof(accountNumber));
@@ -47,7 +48,7 @@ namespace bank.Core
             {
                 Console.WriteLine(
                     $"\nWithdraw denied: overdraft limit exceeded." +
-                    $"\nAmount: {amount} | Balance: {Balance} | Available: {AvailableFunds} | Min allowed balance: {minAllowed}");
+                    $"\nAmount: {amount} {Currency} | Balance: {Balance} {Currency} | Available: {AvailableFunds} {Currency} | Min allowed balance: {minAllowed} {Currency}");
                 return;
             }
 
@@ -61,7 +62,9 @@ namespace bank.Core
                 amount: amount
             ));
 
-            Console.WriteLine($"\nWithdraw succeeded: {amount} kr. New balance = {Balance} kr.");
+            Console.WriteLine($"\nWithdraw succeeded: {amount} {Currency}. New balance = {Balance} {Currency}.");
         }
+
+
     }
 }

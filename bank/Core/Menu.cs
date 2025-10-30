@@ -207,5 +207,59 @@ namespace bank.Core
                     break;
             }
         }
+
+        private void DoTransfer()
+        {
+            Console.Clear();
+            Console.WriteLine("=== TRANSFER MONEY ===\n");
+
+            var userAccounts = currentUser!.Accounts;
+
+            if (userAccounts.Count == 0)
+            {
+                Console.WriteLine("✗ You have no accounts to transfer from.");
+                Console.ReadKey();
+                return;
+            }
+
+            Console.WriteLine("Select source account:");
+            for (int i = 0; i < userAccounts.Count; i++)
+                Console.WriteLine($"{i + 1}. {userAccounts[i].AccountNumber} ({userAccounts[i].Currency})");
+
+            Console.Write("Select: ");
+            if (!int.TryParse(Console.ReadLine(), out int fromIndex) || fromIndex < 1 || fromIndex > userAccounts.Count)
+            {
+                Console.WriteLine("✗ Invalid selection.");
+                Console.ReadKey();
+                return;
+            }
+
+            var fromAccount = userAccounts[fromIndex - 1];
+            Console.WriteLine($"\nTransfer from {fromAccount.AccountNumber} ({fromAccount.Currency})");
+
+            Console.Write("To account number: ");
+            var to = Console.ReadLine()?.Trim();
+
+            Console.Write($"Amount ({fromAccount.Currency}): ");
+            var amountRaw = Console.ReadLine();
+
+            if (!decimal.TryParse(amountRaw, out var amount))
+            {
+                Console.WriteLine("✗ Invalid amount.");
+                Console.ReadKey();
+                return;
+            }
+
+            var ok = bank.Transfer(currentUser!, fromAccount.AccountNumber, to!, amount);
+
+            Console.WriteLine(ok
+                ? $"✓ Transfer completed: {amount} {fromAccount.Currency} transferred from {fromAccount.AccountNumber}."
+                : "✗ Transfer failed.");
+
+            Console.WriteLine("\nPress any key to continue...");
+            Console.ReadKey();
+        }
+
+
     }
 }
