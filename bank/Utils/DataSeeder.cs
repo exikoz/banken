@@ -42,7 +42,7 @@ namespace bank.Utils
             // Seed some initial balances and transactions
             SeedTransactions(acc1, acc2, acc3, acc4, acc5, acc6);
 
-            Console.WriteLine("✓ Test data seeded successfully!");
+            //Console.WriteLine("✓ Test data seeded successfully!");
         }
 
         /// <summary>
