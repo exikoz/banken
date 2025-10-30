@@ -13,10 +13,8 @@ namespace bank.Core
         private readonly TransactionService transactionService;
         private readonly InterestService interestService;
         private readonly LoanService loanService;
-
-
-
-
+        private readonly TransferService transferService;
+        private bool hasShownSplash = false;
 
         public Menu()
         {
@@ -27,58 +25,45 @@ namespace bank.Core
             transactionService = new TransactionService(bank);
             interestService = new InterestService(bank);
             loanService = new LoanService(bank);
-
-
+            transferService = new TransferService(bank, accountService);
 
             DataSeeder.SeedTestData(bank);
         }
 
-        private void SeedTestData()
-        {
-            // --- Create test users ---
-            var user1 = new User("U001", "Alexander", "1234");
-            var user2 = new User("U002", "Maria", "5678");
-            var admin = new User("ADMIN", "Admin User", "0000", UserRole.Admin);
-
-            // --- Register them in the bank system ---
-            bank.RegisterUser(user1);
-            bank.RegisterUser(user2);
-            bank.RegisterUser(admin);
-
-            // --- No accounts created automatically ---
-            // Users can now create Savings or Checking accounts manually via menu
-        }
-
-
         public void DrawUI()
         {
-            Console.Title = "Malmo Royal Bank";
+            Console.Title = "Malmö Royal Bank";
+
+            // Show splash screen only once at startup
+            //if (!hasShownSplash)
+            //{
+            //    AsciiArt.DisplaySplashScreen();
+            //    hasShownSplash = true;
+            //}
 
             while (true)
             {
-                Console.Clear();
-                Console.WriteLine("=== WELCOME TO MALMO BANK SYSTEM ===\n");
-
                 if (currentUser == null)
                 {
+                    ConsoleHelper.ClearScreen();
+                    AsciiArt.DisplayBankLogo();
                     ShowLoginMenu();
                 }
                 else
                 {
+                    Console.Clear();
                     ShowMainMenu();
                 }
             }
         }
 
-        /// <summary>
-        /// Shows the menu for unauthenticated users (Login, Register, Exit)
-        /// Delegates login and registration UI entirely to AuthenticationService.
-        /// </summary>
         private void ShowLoginMenu()
         {
+            ConsoleHelper.WriteHeader("WELCOME");
+
             Console.WriteLine("1. Log In");
             Console.WriteLine("2. Register New User");
-            Console.WriteLine("3. Exit");
+            Console.WriteLine("0. Exit");
             Console.Write("\nChoose option: ");
 
             var choice = Console.ReadLine();
@@ -86,30 +71,25 @@ namespace bank.Core
             switch (choice)
             {
                 case "1":
-                    // Calls the complete login flow from AuthenticationService
                     currentUser = authService.ShowLoginUI();
                     break;
                 case "2":
-                    // Calls the complete registration flow from AuthenticationService
                     authService.ShowRegistrationUI();
                     break;
-                case "3":
+                case "0":
                     Environment.Exit(0);
                     break;
                 default:
-                    Console.WriteLine("\n✗ Invalid choice. Press any key to try again.");
+                    ConsoleHelper.WriteError("Invalid choice. Press any key to try again.");
                     Console.ReadKey();
                     break;
             }
         }
 
-        /// <summary>
-        /// Shows the main menu for authenticated users
-        /// Delegates banking operations to AccountService.
-        /// </summary>
         private void ShowMainMenu()
         {
-            Console.WriteLine($"--- Welcome, {currentUser!.Name} ({currentUser.Id}) [{currentUser.Role}] ---");
+            Console.WriteLine($"=== MALMÖ ROYAL BANK ===");
+            Console.WriteLine($"Logged in as: {currentUser!.Name} ({currentUser.Id}) [{currentUser.Role}]\n");
 
             if (currentUser.IsAdmin())
             {
@@ -123,15 +103,16 @@ namespace bank.Core
 
         private void ShowCustomerMenu()
         {
-            Console.WriteLine("\n1. View My Accounts (Balance)");
+            Console.WriteLine("1. View My Accounts (Balance)");
             Console.WriteLine("2. Deposit Money");
             Console.WriteLine("3. Withdraw Money");
             Console.WriteLine("4. Open New Account");
             Console.WriteLine("5. Calculate Interest");
-            Console.WriteLine("6. View Transaction Log");
-            Console.WriteLine("7. Apply for Loan");
-            Console.WriteLine("8. Log Out");
-            Console.WriteLine("9. Exit");
+            Console.WriteLine("6. Transfer Money");
+            Console.WriteLine("7. View Transaction Log");
+            Console.WriteLine("8. Apply for Loan");
+            Console.WriteLine("9. Log Out");
+            Console.WriteLine("0. Exit");
             Console.Write("\nChoose option: ");
 
             var choice = Console.ReadLine();
@@ -154,33 +135,36 @@ namespace bank.Core
                     interestService.CalculateInterest(currentUser!);
                     break;
                 case "6":
-                    transactionService.ShowTransactionLog(currentUser!);
+                    ShowTransferMenu();
                     break;
                 case "7":
-                    loanService.ApplyForLoan(currentUser!);
+                    transactionService.ShowTransactionLog(currentUser!);
                     break;
                 case "8":
-                    currentUser = null;
-                    Console.WriteLine("\nSuccessfully logged out. Press any key to return to the welcome screen.");
-                    Console.ReadKey();
+                    loanService.ApplyForLoan(currentUser!);
                     break;
                 case "9":
+                    currentUser = null;
+                    ConsoleHelper.WriteSuccess("Successfully logged out.");
+                    Console.WriteLine("\nPress any key to return to the welcome screen.");
+                    Console.ReadKey();
+                    break;
+                case "0":
                     Environment.Exit(0);
                     break;
                 default:
-                    Console.WriteLine("\n✗ Invalid choice. Press any key to try again.");
+                    ConsoleHelper.WriteError("Invalid choice. Press any key to try again.");
                     Console.ReadKey();
                     break;
             }
-
         }
 
         private void ShowAdminMenu()
         {
-            Console.WriteLine("\n1. Admin Dashboard");
+            Console.WriteLine("1. Admin Dashboard");
             Console.WriteLine("2. View My Accounts (Personal)");
             Console.WriteLine("3. Log Out");
-            Console.WriteLine("4. Exit");
+            Console.WriteLine("0. Exit");
             Console.Write("\nChoose option: ");
 
             var choice = Console.ReadLine();
@@ -195,71 +179,46 @@ namespace bank.Core
                     break;
                 case "3":
                     currentUser = null;
-                    Console.WriteLine("\nSuccessfully logged out. Press any key to return to the welcome screen.");
+                    ConsoleHelper.WriteSuccess("Successfully logged out.");
+                    Console.WriteLine("\nPress any key to return to the welcome screen.");
                     Console.ReadKey();
                     break;
-                case "4":
+                case "0":
                     Environment.Exit(0);
                     break;
                 default:
-                    Console.WriteLine("\n✗ Invalid choice. Press any key to try again.");
+                    ConsoleHelper.WriteError("Invalid choice. Press any key to try again.");
                     Console.ReadKey();
                     break;
             }
         }
 
-        private void DoTransfer()
+        private void ShowTransferMenu()
         {
-            Console.Clear();
-            Console.WriteLine("=== TRANSFER MONEY ===\n");
+            ConsoleHelper.WriteHeader("TRANSFER MONEY");
 
-            var userAccounts = currentUser!.Accounts;
+            Console.WriteLine("1. Transfer between my own accounts");
+            Console.WriteLine("2. Transfer to another customer");
+            Console.WriteLine("3. Back to main menu");
+            Console.Write("\nChoose option: ");
 
-            if (userAccounts.Count == 0)
+            var choice = Console.ReadLine();
+
+            switch (choice)
             {
-                Console.WriteLine("✗ You have no accounts to transfer from.");
-                Console.ReadKey();
-                return;
+                case "1":
+                    transferService.DoTransferOwn(currentUser!);
+                    break;
+                case "2":
+                    transferService.DoTransferToOther(currentUser!);
+                    break;
+                case "3":
+                    return;
+                default:
+                    ConsoleHelper.WriteError("Invalid choice. Press any key to try again.");
+                    Console.ReadKey();
+                    break;
             }
-
-            Console.WriteLine("Select source account:");
-            for (int i = 0; i < userAccounts.Count; i++)
-                Console.WriteLine($"{i + 1}. {userAccounts[i].AccountNumber} ({userAccounts[i].Currency})");
-
-            Console.Write("Select: ");
-            if (!int.TryParse(Console.ReadLine(), out int fromIndex) || fromIndex < 1 || fromIndex > userAccounts.Count)
-            {
-                Console.WriteLine("✗ Invalid selection.");
-                Console.ReadKey();
-                return;
-            }
-
-            var fromAccount = userAccounts[fromIndex - 1];
-            Console.WriteLine($"\nTransfer from {fromAccount.AccountNumber} ({fromAccount.Currency})");
-
-            Console.Write("To account number: ");
-            var to = Console.ReadLine()?.Trim();
-
-            Console.Write($"Amount ({fromAccount.Currency}): ");
-            var amountRaw = Console.ReadLine();
-
-            if (!decimal.TryParse(amountRaw, out var amount))
-            {
-                Console.WriteLine("✗ Invalid amount.");
-                Console.ReadKey();
-                return;
-            }
-
-            var ok = bank.Transfer(currentUser!, fromAccount.AccountNumber, to!, amount);
-
-            Console.WriteLine(ok
-                ? $"✓ Transfer completed: {amount} {fromAccount.Currency} transferred from {fromAccount.AccountNumber}."
-                : "✗ Transfer failed.");
-
-            Console.WriteLine("\nPress any key to continue...");
-            Console.ReadKey();
         }
-
-
     }
 }

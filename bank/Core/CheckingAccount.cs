@@ -4,14 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-
 namespace bank.Core
 {
     public class CheckingAccount : Account
     {
-         public decimal OverdraftLimit { get; private set; }
+        public decimal OverdraftLimit { get; private set; }
 
-             public decimal AvailableFunds => Balance + OverdraftLimit;
+        public decimal AvailableFunds => Balance + OverdraftLimit;
 
         public CheckingAccount(string accountNumber, User owner, string accountType, string currency, decimal overdraftLimit = 1000m)
             : base(accountNumber, owner, accountType, currency)
@@ -27,14 +26,12 @@ namespace bank.Core
             OverdraftLimit = overdraftLimit;
         }
 
-  
         public void SetOverdraftLimit(decimal newLimit)
         {
             if (newLimit < 0)
                 throw new ArgumentOutOfRangeException(nameof(newLimit), "OverdraftLimit must be ≥ 0.");
             OverdraftLimit = newLimit;
         }
-
 
         public override void Withdraw(decimal amount)
         {
@@ -57,7 +54,6 @@ namespace bank.Core
 
             Balance = projected;
 
-            
             Transactions.Add(new Transaction(
                 id: Guid.NewGuid().ToString("N"),
                 accountNumber: AccountNumber,
