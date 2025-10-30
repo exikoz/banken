@@ -13,7 +13,7 @@ namespace bank.Core
         private readonly TransactionService transactionService;
         private readonly InterestService interestService;
         private readonly LoanService loanService;
-        private readonly TransferService transferService; // CHANGE: added
+        private readonly TransferService transferService; 
 
         public Menu()
         {
@@ -24,7 +24,7 @@ namespace bank.Core
             transactionService = new TransactionService(bank);
             interestService = new InterestService(bank);
             loanService = new LoanService(bank);
-            transferService = new TransferService(bank); // CHANGE: added
+            transferService = new TransferService(bank, accountService);
 
             DataSeeder.SeedTestData(bank);
         }
@@ -40,7 +40,6 @@ namespace bank.Core
             bank.RegisterUser(user1);
             bank.RegisterUser(user2);
             bank.RegisterUser(admin);
-
             // --- No accounts created automatically ---
             // Users can now create Savings or Checking accounts manually via menu
         }
@@ -151,7 +150,7 @@ namespace bank.Core
                     interestService.CalculateInterest(currentUser!);
                     break;
                 case "6":
-                    transferService.DoTransfer(currentUser!); 
+                    ShowTransferMenu();
                     break;
                 case "7":
                     transactionService.ShowTransactionLog(currentUser!);
@@ -207,59 +206,34 @@ namespace bank.Core
                     break;
             }
         }
-
-        private void DoTransfer()
-        {
-            Console.Clear();
+        private void ShowTransferMenu()
+            { 
             Console.WriteLine("=== TRANSFER MONEY ===\n");
+            Console.WriteLine("1. Transfer between my own accounts");
+            Console.WriteLine("2. Transfer to another customer");
+            Console.WriteLine("3. Back to main menu");
+            Console.Write("\nChoose option: ");
 
-            var userAccounts = currentUser!.Accounts;
+            var choice = Console.ReadLine();
+            switch (choice) {
+                case "1":
+                    transferService.DoTransferOwn(currentUser!);
+                    break;
+                
+                case "2":
+                    transferService.DoTransferToOther(currentUser!);
+                    break;
 
-            if (userAccounts.Count == 0)
-            {
-                Console.WriteLine("✗ You have no accounts to transfer from.");
-                Console.ReadKey();
-                return;
+                case "3":
+                    return;
+
+                default:
+                    Console.WriteLine("\n✗ Invalid choice. Press any key to try again.");
+                    Console.ReadKey();
+                    break;
+
             }
 
-            Console.WriteLine("Select source account:");
-            for (int i = 0; i < userAccounts.Count; i++)
-                Console.WriteLine($"{i + 1}. {userAccounts[i].AccountNumber} ({userAccounts[i].Currency})");
-
-            Console.Write("Select: ");
-            if (!int.TryParse(Console.ReadLine(), out int fromIndex) || fromIndex < 1 || fromIndex > userAccounts.Count)
-            {
-                Console.WriteLine("✗ Invalid selection.");
-                Console.ReadKey();
-                return;
-            }
-
-            var fromAccount = userAccounts[fromIndex - 1];
-            Console.WriteLine($"\nTransfer from {fromAccount.AccountNumber} ({fromAccount.Currency})");
-
-            Console.Write("To account number: ");
-            var to = Console.ReadLine()?.Trim();
-
-            Console.Write($"Amount ({fromAccount.Currency}): ");
-            var amountRaw = Console.ReadLine();
-
-            if (!decimal.TryParse(amountRaw, out var amount))
-            {
-                Console.WriteLine("✗ Invalid amount.");
-                Console.ReadKey();
-                return;
-            }
-
-            var ok = bank.Transfer(currentUser!, fromAccount.AccountNumber, to!, amount);
-
-            Console.WriteLine(ok
-                ? $"✓ Transfer completed: {amount} {fromAccount.Currency} transferred from {fromAccount.AccountNumber}."
-                : "✗ Transfer failed.");
-
-            Console.WriteLine("\nPress any key to continue...");
-            Console.ReadKey();
         }
-
-
     }
 }
