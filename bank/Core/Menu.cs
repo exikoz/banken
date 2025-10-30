@@ -13,10 +13,7 @@ namespace bank.Core
         private readonly TransactionService transactionService;
         private readonly InterestService interestService;
         private readonly LoanService loanService;
-
-
-
-
+        private readonly TransferService transferService; // CHANGE: added
 
         public Menu()
         {
@@ -27,8 +24,7 @@ namespace bank.Core
             transactionService = new TransactionService(bank);
             interestService = new InterestService(bank);
             loanService = new LoanService(bank);
-
-
+            transferService = new TransferService(bank); // CHANGE: added
 
             DataSeeder.SeedTestData(bank);
         }
@@ -78,7 +74,7 @@ namespace bank.Core
         {
             Console.WriteLine("1. Log In");
             Console.WriteLine("2. Register New User");
-            Console.WriteLine("3. Exit");
+            Console.WriteLine("0. Exit");
             Console.Write("\nChoose option: ");
 
             var choice = Console.ReadLine();
@@ -93,7 +89,7 @@ namespace bank.Core
                     // Calls the complete registration flow from AuthenticationService
                     authService.ShowRegistrationUI();
                     break;
-                case "3":
+                case "0":
                     Environment.Exit(0);
                     break;
                 default:
@@ -128,10 +124,11 @@ namespace bank.Core
             Console.WriteLine("3. Withdraw Money");
             Console.WriteLine("4. Open New Account");
             Console.WriteLine("5. Calculate Interest");
-            Console.WriteLine("6. View Transaction Log");
-            Console.WriteLine("7. Apply for Loan");
-            Console.WriteLine("8. Log Out");
-            Console.WriteLine("9. Exit");
+            Console.WriteLine("6. Transfer Money");       
+            Console.WriteLine("7. View Transaction Log");
+            Console.WriteLine("8. Apply for Loan");
+            Console.WriteLine("9. Log Out");
+            Console.WriteLine("0. Exit");
             Console.Write("\nChoose option: ");
 
             var choice = Console.ReadLine();
@@ -154,17 +151,20 @@ namespace bank.Core
                     interestService.CalculateInterest(currentUser!);
                     break;
                 case "6":
-                    transactionService.ShowTransactionLog(currentUser!);
+                    transferService.DoTransfer(currentUser!); 
                     break;
                 case "7":
-                    loanService.ApplyForLoan(currentUser!);
+                    transactionService.ShowTransactionLog(currentUser!);
                     break;
                 case "8":
+                    loanService.ApplyForLoan(currentUser!);
+                    break;
+                case "9":
                     currentUser = null;
                     Console.WriteLine("\nSuccessfully logged out. Press any key to return to the welcome screen.");
                     Console.ReadKey();
                     break;
-                case "9":
+                case "0":
                     Environment.Exit(0);
                     break;
                 default:
@@ -180,7 +180,7 @@ namespace bank.Core
             Console.WriteLine("\n1. Admin Dashboard");
             Console.WriteLine("2. View My Accounts (Personal)");
             Console.WriteLine("3. Log Out");
-            Console.WriteLine("4. Exit");
+            Console.WriteLine("0. Exit");
             Console.Write("\nChoose option: ");
 
             var choice = Console.ReadLine();
@@ -198,7 +198,7 @@ namespace bank.Core
                     Console.WriteLine("\nSuccessfully logged out. Press any key to return to the welcome screen.");
                     Console.ReadKey();
                     break;
-                case "4":
+                case "0":
                     Environment.Exit(0);
                     break;
                 default:

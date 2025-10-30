@@ -57,6 +57,10 @@ namespace bank.Services
                                          account is SavingsAccount ? "Savings Account" :
                                          "Unknown Type";
 
+                    //Show Available incl. overdraft up to 1,000 for both types
+                    decimal overdraft = 1000m;
+                    decimal available = account.Balance + overdraft; 
+
                     Console.WriteLine($"Account: {account.AccountNumber} ({accountType})");
                     Console.WriteLine($"Balance: {account.Balance} {account.Currency}");
                     Console.WriteLine("─────────────────────");
@@ -136,7 +140,8 @@ namespace bank.Services
             Console.Write($"Amount to withdraw ({account.Currency}): ");
             if (decimal.TryParse(Console.ReadLine(), out var amount))
             {
-                account.Withdraw(amount);
+                
+                account.Withdraw(amount); 
             }
             else
             {
