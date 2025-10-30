@@ -31,8 +31,10 @@ namespace bank.Services
             decimal totalBalance = currentUser.Accounts.Sum(a => a.Balance);
             decimal maxLoan = totalBalance * 5;
 
-            Console.WriteLine($"Your total balance: {totalBalance:C}");
-            Console.WriteLine($"Maximum allowed loan (x5): {maxLoan:C}\n");
+            var currency = currentUser.Accounts.First().Currency;
+            Console.WriteLine($"Your total balance: {totalBalance} {currency}");
+            Console.WriteLine($"Maximum allowed loan (x5): {maxLoan} {currency}\n");
+
 
             Console.Write("Enter desired amount: ");
             if (!decimal.TryParse(Console.ReadLine(), out var amount) || amount <= 0)
@@ -65,10 +67,10 @@ namespace bank.Services
             decimal totalRepayment = amount + (amount * (interestRate / 100) * (months / 12m));
 
             Console.WriteLine($"\n✓ Loan approved!");
-            Console.WriteLine($"Amount: {amount:C}");
-            Console.WriteLine($"Interest rate: {interestRate}%");
+            Console.WriteLine($"Amount: {amount} {currency}");
+            Console.WriteLine($"Total loan + interest: {totalRepayment} {currency}");
             Console.WriteLine($"Months: {months}");
-            Console.WriteLine($"Total repayment: {totalRepayment:C}");
+            Console.WriteLine($"Total repayment: {totalRepayment} {currency}");
 
             Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
