@@ -11,10 +11,12 @@ namespace bank.Services
     public class SearchService
     {
         private readonly Bank bank;
+        private readonly ExchangerateService exchangerateService;
 
-        public SearchService(Bank bank)
+        public SearchService(Bank bank, ExchangerateService exchangerateService)
         {
             this.bank = bank;
+            this.exchangerateService = exchangerateService;
         }
 
         /// <summary>
@@ -63,6 +65,16 @@ namespace bank.Services
         public List<User> GetAllUsers()
         {
             return bank.Users.ToList();
+        }
+
+
+
+        /// <summary>
+        /// Get all exchangerates in the system
+        /// </summary>
+        public IEnumerable<ExchangeRate> GetAllExchangeRates()
+        {
+            return exchangerateService.getAllRates();
         }
     }
 }

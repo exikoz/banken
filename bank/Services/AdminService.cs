@@ -9,12 +9,13 @@ namespace bank.Services
     public class AdminService
     {
         private readonly Bank bank;
+        private readonly ExchangerateService exchangerateService = new ExchangerateService();
         private readonly SearchService searchService;
 
         public AdminService(Bank bank)
         {
             this.bank = bank;
-            this.searchService = new SearchService(bank);
+            this.searchService = new SearchService(bank, exchangerateService);
         }
 
         /// <summary>
@@ -39,7 +40,10 @@ namespace bank.Services
                 Console.WriteLine("1. Search Account");
                 Console.WriteLine("2. View All Users");
                 Console.WriteLine("3. View All Accounts");
-                Console.WriteLine("4. Back to Main Menu");
+                Console.WriteLine("4. View All Exchange rates");
+                Console.WriteLine("5. Add/Update Exchange rates");
+                Console.WriteLine("6. Unblock users");
+                Console.WriteLine("7. Back to Main Menu");
                 Console.Write("\nChoose option: ");
 
                 var choice = Console.ReadLine();
@@ -56,14 +60,204 @@ namespace bank.Services
                         ViewAllAccounts();
                         break;
                     case "4":
+                        ViewAllRates();
+                        break;
+                    case "5":
+                        AddExchangeRate();
+                        break;
+                    case "6":
+                        UnlockUserBlocks();
+                        break;
+                    case "7":
                         exit = true;
                         break;
                     default:
-                        Console.WriteLine("\n✗ Invalid choice.");
+                        Console.WriteLine("\n Invalid choice.");
                         TableFormatter.PauseForUser();
                         break;
                 }
             }
+        }
+
+
+
+        private List<User>? _blockedUsers;
+
+
+        // if blockedUsers have not been initialized, then we default to fetching them 
+        private List<User> GetBlockedUsers()
+        {
+           return _blockedUsers ??= searchService.GetAllUsers().Where(u => u.isBlocked).ToList();
+        }
+
+
+
+
+        public void UnlockUserBlocks()
+        {
+
+
+
+            // Here we init  blocked users list
+            var blockedUsers = GetBlockedUsers();
+
+            if (blockedUsers.Count == 0) 
+            {
+                Console.WriteLine("No blocked users found.");
+                TableFormatter.PauseForUser();
+                return;
+            }
+
+
+
+            while(true)
+            {
+
+
+
+                Console.ForegroundColor = ConsoleColor.Red;
+                foreach (var user in blockedUsers)
+                {
+                    Console.WriteLine($"User: {user.Name} (ID: {user.Id}) is blocked");
+                }
+
+
+                Console.ResetColor();
+
+                Console.WriteLine("Type in user ID to unblock or type 'B' to go back:");
+                var input = Console.ReadLine();
+
+                if (string.Equals(input, "B", StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
+                }
+
+
+                var userToUnlock = blockedUsers.FirstOrDefault(u => u.Id == input);
+
+                if (userToUnlock == null)
+                {
+                    Console.WriteLine("Invalid user ID. Please try again.");
+                    TableFormatter.PauseForUser();
+                    continue;
+                }
+
+                userToUnlock.FailedLoginAttempts = 0;
+
+                Console.ForegroundColor = ConsoleColor.Green;
+                if(!userToUnlock.isBlocked)
+                {
+                    Console.WriteLine($"User: {userToUnlock.Name} (ID: {userToUnlock.Id}) has been unblocked successfully.");
+                    Console.ResetColor();
+
+
+                    // Refresh the blocked users list
+                    _blockedUsers = null;
+                    blockedUsers = GetBlockedUsers();
+                }
+
+            }
+            TableFormatter.PauseForUser();
+        }
+
+
+        // TODO I ÖVRIGT: När vi kallar listor, borde vi ha en tom först som fylls första gången den kallas
+        // och sedan istället för att direkt alltid häma, borde vi först kolla om listan är tom , så sparar man pp onödiga hämntingar
+
+
+
+
+        // TODO - fixa så att man bara kan skriva in språk och valutakod på olika sätt (sek, sve, etc), just nu funkar denna halvt pga en miss
+        private void AddExchangeRate()
+        {
+            Console.Clear();
+            Console.WriteLine("=== UPDATE EXCHANGE RATES ===\n");
+
+            var rates = searchService.GetAllExchangeRates();
+
+
+
+            TableFormatter.DisplayRatesTable(rates, "");
+
+            if (!rates.Any())
+            {
+                Console.WriteLine("No exchangerates added yet. Time to add one!");
+                var codes = Enum.GetValues<CurrencyCode>();
+                foreach (var code in codes)
+                {
+                    Console.WriteLine($"{(int)code}. {code}");
+                }
+
+            }
+            Console.WriteLine("Pick a rate to add or update by typing in their code:\n");
+
+
+            var selectedRate = Console.ReadLine();
+
+            if (selectedRate == null)
+            {
+                Console.WriteLine("\n Invalid choice. Needs to be a number");
+                TableFormatter.PauseForUser();
+                return;
+            }
+
+            if (!int.TryParse(selectedRate, out var choice))
+            {
+                Console.WriteLine("\n Invalid choice. Needs to be a number");
+                TableFormatter.PauseForUser();
+                return;
+            }
+
+
+
+            if (!rates.Any())
+            {
+                Console.WriteLine("No exchangerates added yet. Time to add one!");
+                var codes = Enum.GetValues<CurrencyCode>();
+                foreach (var code in codes)
+                {
+                    Console.WriteLine($"{(int)code}. {code}");
+                }
+            }
+            else if(choice < 0 || choice >= rates.Count())
+            {
+                Console.WriteLine("\n Invalid choice. Needs to be one of the listed rates");
+                TableFormatter.PauseForUser();
+                return;
+            }
+
+            Console.WriteLine($"\n Enter the new exchange rate value for {selectedRate}: ");
+            var rateInput = Console.ReadLine();
+            if(!decimal.TryParse(rateInput, out var newRate))
+            {
+                Console.WriteLine("\n Invalid rate value. Needs to be a decimal number");
+                TableFormatter.PauseForUser();
+                return;
+            }
+
+            
+            exchangerateService.AddRates(new ExchangeRate((CurrencyCode)choice, newRate));
+            TableFormatter.PauseForUser();
+        }
+
+
+
+        private void ViewAllRates()
+        {
+            Console.Clear();
+            Console.WriteLine("=== ALL RATES ===\n");
+
+            var rates = searchService.GetAllExchangeRates();
+
+            if (!rates.Any())
+            {
+                Console.WriteLine("No exchangerates added yet.");
+                TableFormatter.PauseForUser();
+                return;
+            }
+
+            TableFormatter.DisplayRatesTable(rates, "ALL EXCHANGE RATES");
+            TableFormatter.PauseForUser();
         }
 
         /// <summary>

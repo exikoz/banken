@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 
@@ -43,51 +45,104 @@ namespace bank.Utils
          * Params: T data = any data to be added to the file
          *         path = where the file is located. If file doesnt exist it will be created on path.
          */
-        public void WriteJson<T>(T data, string? path = null)
+        public void WriteJson<T>(T data, string? name = null)
         {
+            string FileName = name ?? typeof(T).Name + ".json";
+            string _defaultPath =  Path.Combine(AppContext.BaseDirectory, FileName);
+            List<T> existingData = new List<T>();
 
-            string FileName = typeof(T).Name + ".json";
-            string _defaultPath = path ?? Path.Combine(AppContext.BaseDirectory, FileName);
 
+            if (File.Exists(_defaultPath))
+            {
 
-            var output = JsonSerializer.Serialize(data,new JsonSerializerOptions { WriteIndented = true }); // Adds indentations to the JSON data
+                try
+                {
+                    string json = File.ReadAllText(_defaultPath);
+                    existingData = JsonSerializer.Deserialize<List<T>>(json) ?? new List<T>();
+                }
+                catch
+                {
+                    existingData = new List<T>(); // Sends empty list so we dont get any crashes
+                }
 
-            if (!File.Exists(_defaultPath)) File.WriteAllText(_defaultPath, output);
-
-            var json = File.ReadAllText(_defaultPath);
-            File.WriteAllText(_defaultPath, output);
-            Console.WriteLine($"Json saved to this path: {_defaultPath}"); // TODO switch with the response helper method later on
+                existingData.Add(data);
+                string output = JsonSerializer.Serialize(existingData, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(_defaultPath, output);
+                Console.WriteLine($"Json saved to this path: {_defaultPath}");
+            }
+            else
+            {
+                existingData.Add(data);
+                string output = JsonSerializer.Serialize(existingData, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(_defaultPath, output);
+                Console.WriteLine($"Json saved to this path: {_defaultPath}"); // TODO switch with the response helper method later on
+            }
         }
-
-
-        public void RemoveJson()
-        {
-
-        }
+        
 
 
         // This helper takes in any query and file to find data in json.
         // It works by deserialising the json doc into a List and then we use LINQ to find the data
 
-        public static IEnumerable<T> DeserializeJson<T>(string filePath)
+        public static List<T> DeserializeJson<T>(string filePath)
         {
+
+            if (!File.Exists(filePath)) return new List<T>();
+
+
             var jsonData = File.ReadAllText(filePath);
-            var data = JsonSerializer.Deserialize<List<T>>(jsonData) ?? new List<T>(); // Returns empty list instead of null to avoid annoying crashes
-            return data;
+
+            if (string.IsNullOrWhiteSpace(jsonData)) return new List<T>();
+
+
+            try
+            {
+                return JsonSerializer.Deserialize<List<T>>(jsonData) ?? new List<T>(); ; // Returns empty list instead of null to avoid annoying crashes
+
+            }
+            catch (JsonException)
+            {
+                return new List<T>();
+            }
+
         }
 
 
 
-        // LINQ HELPERS
 
-        public static IEnumerable<T> FindByQueryJson<T>(Func<T, bool> query, string filePath)
+
+
+
+        public void UpdateJson<T>(Func<T, bool> fieldToUpdate, T newData, string filePath)
         {
-            return DeserializeJson<T>(filePath).Where(query);
+            var dataSet = DeserializeJson<T>(filePath);
+            if (dataSet == null)
+            {
+                WriteJson(newData, filePath);
+            }
+            ;
+
+            var exists = dataSet.FirstOrDefault(fieldToUpdate);
+            if (exists == null)
+            {
+                dataSet.Add(newData);
+            }
+            else
+            {
+                var matching = dataSet.IndexOf(exists);
+
+                if (matching >= 0)
+                {
+                    dataSet[matching] = newData;
+                }
+                else
+                    dataSet.Add(newData);
+
+            }
+            string output = JsonSerializer.Serialize(dataSet, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(filePath, output);
+
         }
-
-
-
-
 
 
     }

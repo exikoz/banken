@@ -55,6 +55,33 @@ namespace bank.Utils
             Console.WriteLine($"Total users: {users.Count}");
         }
 
+
+
+        public static void DisplayRatesTable(IEnumerable<ExchangeRate> rates, string title = "")
+        {
+            if (!rates.Any())
+            {
+                Console.WriteLine("No rates to display.");
+                return;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine($"=== {title} ===");
+            Console.WriteLine();
+
+            Console.WriteLine(new string('-', 80)); // Simple line separator
+            Console.ForegroundColor = ConsoleColor.Green;
+            foreach (var rate in rates)
+            {
+                Console.WriteLine($"Code: {rate.Code}: Rate:  {rate.Rate}  Last Updated:   {rate.LastUpdated}");
+            }
+            Console.ResetColor();
+        }
+
+
+
+
+
         /// <summary>
         /// Display accounts in a simple table
         /// </summary>
