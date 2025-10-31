@@ -37,7 +37,7 @@ namespace bank.Services
             for (int i = 0; i < currentUser.Accounts.Count; i++)
             {
                 var acc = currentUser.Accounts[i];
-                Console.WriteLine($"{i + 1}. {acc.AccountNumber} | Balance: {acc.Balance:C}");
+                Console.WriteLine($"{i + 1}. {acc.AccountNumber} | Balance: {acc.Balance} {acc.Currency}");
             }
 
             Console.Write("\nChoose source (number): ");
@@ -55,7 +55,7 @@ namespace bank.Services
             for (int i = 0; i < currentUser.Accounts.Count; i++)
             {
                 var acc = currentUser.Accounts[i];
-                Console.WriteLine($"{i + 1}. {acc.AccountNumber} | Balance: {acc.Balance:C}");
+                Console.WriteLine($"{i + 1}. {acc.AccountNumber} | Balance: {acc.Balance} {acc.Currency}");
             }
 
             Console.Write("\nChoose destination (number): ");
@@ -75,7 +75,7 @@ namespace bank.Services
 
             var toAcc = currentUser.Accounts[dstIdx - 1];
 
-            Console.Write("\nAmount (kr): ");
+            Console.Write($"\nAmount ({fromAcc.Currency}): ");
             var amountRaw = Console.ReadLine();
             if (!decimal.TryParse(amountRaw, out var amount))
             {
@@ -110,7 +110,7 @@ namespace bank.Services
             for (int i = 0; i < currentUser.Accounts.Count; i++)
             {
                 var acc = currentUser.Accounts[i];
-                Console.WriteLine($"{i + 1}. {acc.AccountNumber} | Balance: {acc.Balance:C}");
+                Console.WriteLine($"{i + 1}. {acc.AccountNumber} | Balance: {acc.Balance} {acc.Currency}");
             }
 
             Console.Write("\nChoose source (number): ");
@@ -155,7 +155,7 @@ namespace bank.Services
                 return;
             }
 
-            Console.Write("\nAmount (kr): ");
+            Console.Write($"\nAmount ({fromAcc.Currency}): ");
             var amountRaw = Console.ReadLine();
             if (!decimal.TryParse(amountRaw, out var amount))
             {
@@ -168,7 +168,7 @@ namespace bank.Services
 
             if (ok)
             {
-                Console.WriteLine($"✓ Successfully transferred {amount:C} from {fromAcc.AccountNumber} to {recipientName} ({toAccNumber}).");
+                Console.WriteLine($"✓ Successfully transferred {amount} {fromAcc.Currency} from {fromAcc.AccountNumber} to {recipientName} ({toAccNumber}).");
             }
             else
             {
@@ -213,7 +213,7 @@ namespace bank.Services
             from.Withdraw(amount);
             to.Deposit(amount);
 
-            Console.WriteLine($"Transfer: {amount} kr transferred from {fromAccountNumber} to {toAccountNumber}.");
+            Console.WriteLine($"Transfer: {amount} {from.Currency} transferred from {fromAccountNumber} to {toAccountNumber}.");
             return true;
         }
 
@@ -256,7 +256,7 @@ namespace bank.Services
             from.Withdraw(amount);
             to.Deposit(amount);
 
-            Console.WriteLine($"Transfer: {amount:C} sent from {sender.Name} ({from.AccountNumber}) to {to.Owner.Name} ({to.AccountNumber}).");
+            Console.WriteLine($"Transfer: {amount} {from.Currency} sent from {sender.Name} ({from.AccountNumber}) to {to.Owner.Name} ({to.AccountNumber}).");
             return true;
 
         }

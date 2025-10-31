@@ -105,8 +105,8 @@ namespace bank.Core
             Console.WriteLine($"Current balance: {Balance} {Currency}");
             Console.WriteLine($"Annual interest rate: {annualInterestRate}%");
             Console.WriteLine($"Period: {months} months");
-            Console.WriteLine($"Interest earned: {interest} {Currency}");
-            Console.WriteLine($"Future balance: {futureBalance} {Currency}\n");
+            Console.WriteLine($"Interest cost: {interest} {Currency}");
+            Console.WriteLine($"Total loan + interest: {futureBalance} {Currency}\n");
 
             return futureBalance;
         }
