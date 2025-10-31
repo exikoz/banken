@@ -1,4 +1,4 @@
-# Veckorapporter – Grit Academy Projekt (BankApp)
+# Veckorapporter – Chas Academy Projekt (BankApp)
 
 ## Vecka 44 – Rapportör: 
 **Alexander**, 31/10 2025
