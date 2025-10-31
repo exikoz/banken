@@ -19,28 +19,26 @@ namespace bank.Services
             Console.Clear();
             Console.WriteLine("=== TRANSACTION LOG ===\n");
 
-            Console.WriteLine($"{"Date and Time",-22} | {"Type",-10} | {"Amount",15} | {"Account",-10} | {"Account Type",-12}");
-            Console.WriteLine(new string('-', 80)); // gör linjen lika lång som kolumnerna
+            Console.WriteLine($"{"Date and Time",-22} | {"Type",-10} | {"Amount",-15} | {"Currency",-8} | {"Account",-10} | {"Account Type",-12}");
+            Console.WriteLine(new string('-', 90));
 
             /*
             foreach (var t in allTransactions)
             {
-                var account = currentUser.Accounts
-                    .FirstOrDefault(a => a.AccountNumber.Trim().Equals(t.AccountNumber.Trim(), StringComparison.OrdinalIgnoreCase));
+                var a = x.Account;
+                var t = x.Transaction;
 
-                string accountType = account is SavingsAccount ? "Savings" :
-                                     account is CheckingAccount ? "Checking" : "Other";
+                string accountType = a is SavingsAccount ? "Savings" :
+                                     a is CheckingAccount ? "Checking" : "Other";
 
-                // Justerade kolumnbredder för perfekt alignment
-                Console.WriteLine($"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} | {t.Type,-10} | {t.Amount,15:C} | {t.AccountNumber,-10} | {accountType,-12}");
+                Console.WriteLine($"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} | {t.Type,-10} | {t.Amount,-15} | {a.Currency,-8} | {a.AccountNumber,-10} | {accountType,-12}");
             }
 
-            Console.WriteLine(new string('-', 80)); // avslutande linje
+            Console.WriteLine(new string('-', 90));
             Console.WriteLine("\nPress any key to return to menu...");
             Console.ReadKey();
             */
 
         }
-
     }
 }

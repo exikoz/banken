@@ -30,6 +30,13 @@ namespace bank.Services
             Console.Write("Enter User ID: ");
             var userId = Console.ReadLine() ?? "-1";
 
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                Console.WriteLine("\n✗ User ID cannot be empty!");
+                Console.ReadKey();
+                return null;
+            }
+
             var user = bank.FindUser(userId);
 
             if (user == null)
@@ -45,8 +52,17 @@ namespace bank.Services
                 return null;
             }
 
-            // PIN validation with max 3 attempts
+            // Kolla om kontot är låst innan PIN-fråga
+            if (user.IsLocked)
+            {
+                Console.WriteLine("\n✗ This account is locked due to multiple failed login attempts. Contact an admin.");
+                Console.ReadKey();
+                return null;
+            }
+
+            // Om inte låst → fortsätt till PIN
             return ValidatePINWithRetries(user);
+
         }
 
         /// <summary>
@@ -78,7 +94,7 @@ namespace bank.Services
             Console.WriteLine("\n✓ User registered successfully!");
 
             // Optionally create an account for the new user
-            OfferAccountCreation(newUser);
+            //OfferAccountCreation(newUser);
 
             Console.WriteLine("\nYou can now log in with your credentials.");
             Console.ReadKey();
@@ -98,6 +114,9 @@ namespace bank.Services
 
                 if (user.ValidatePIN(pin) && !user.isBlocked)
                 {
+                    // Om kontot var låst av misstag — lås upp (säkerhetsåtgärd)
+                    if (user.IsLocked) user.Unlock();
+
                     Console.WriteLine($"\n✓ Welcome {user.Name}!");
                     Console.ReadKey();
                     return user;
@@ -184,26 +203,26 @@ namespace bank.Services
             return pin;
         }
 
-        /// <summary>
-        /// Offers the user to create an account immediately after registration
-        /// </summary>
-        private void OfferAccountCreation(User user)
-        {
-            Console.Write("\nWould you like to create an account? (y/n): ");
-            var createAccount = Console.ReadLine()?.ToLower();
+        ///// <summary>
+        ///// Offers the user to create an account immediately after registration
+        ///// </summary>
+        //private void OfferAccountCreation(User user)
+        //{
+        //    Console.Write("\nWould you like to create an account? (y/n): ");
+        //    var createAccount = Console.ReadLine()?.ToLower();
 
-            if (createAccount == "y" || createAccount == "yes")
-            {
-                Console.Write("Enter account number (e.g., ACC003): ");
-                var accountNumber = Console.ReadLine();
+        //    if (createAccount == "y" || createAccount == "yes")
+        //    {
+        //        Console.Write("Enter account number (e.g., ACC003): ");
+        //        var accountNumber = Console.ReadLine();
 
-                if (!string.IsNullOrWhiteSpace(accountNumber))
-                {
-                    bank.OpenAccount(user, accountNumber);
-                    Console.WriteLine($"\n✓ Account {accountNumber} created successfully!");
-                }
-            }
-        }
+        //        if (!string.IsNullOrWhiteSpace(accountNumber))
+        //        {
+        //            bank.OpenAccount(user, accountNumber);
+        //            Console.WriteLine($"\n✓ Account {accountNumber} created successfully!");
+        //        }
+        //    }
+        //}
 
         /// <summary>
         /// Reads password input with masked characters (asterisks)

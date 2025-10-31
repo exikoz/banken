@@ -28,18 +28,16 @@ namespace bank.Utils
             bank.RegisterUser(admin);
 
             // Create accounts for Alexander (U001)
-            var acc1 = bank.OpenAccount(user1, "ACC001");
-            var acc2 = bank.OpenAccount(user1, "ACC002"); // Alexander has 2 accounts
+            var acc1 = bank.OpenAccount(user1, "ACC001", "checking");
+            var acc2 = bank.OpenAccount(user1, "ACC002", "savings"); // Alexander has 2 accounts
 
-            // Create accounts for Maria (U002)
-            var acc3 = bank.OpenAccount(user2, "ACC003");
+            var acc3 = bank.OpenAccount(user2, "ACC003", "checking");
 
-            // Create accounts for Erik (U003)
-            var acc4 = bank.OpenAccount(user3, "ACC004");
-            var acc5 = bank.OpenAccount(user3, "ACC005");
+            var acc4 = bank.OpenAccount(user3, "ACC004", "checking");
+            var acc5 = bank.OpenAccount(user3, "ACC005", "savings");
 
-            // Create accounts for Lisa (U004)
-            var acc6 = bank.OpenAccount(user4, "ACC006");
+            var acc6 = bank.OpenAccount(user4, "ACC006", "checking");
+
 
             // Seed some initial balances and transactions
             SeedTransactions(acc1, acc2, acc3, acc4, acc5, acc6);
@@ -113,7 +111,9 @@ namespace bank.Utils
                 int accountCount = (i % 3) + 1;
                 for (int j = 1; j <= accountCount; j++)
                 {
-                    var account = bank.OpenAccount(user, $"ACC{i:D3}-{j}");
+                    var accountType = (j % 2 == 0) ? "savings" : "checking";
+                    var account = bank.OpenAccount(user, $"ACC{i:D3}-{j}", accountType);
+
 
                     // Add some random transactions
                     if (account != null)

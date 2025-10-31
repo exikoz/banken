@@ -6,33 +6,36 @@ using System.Threading.Tasks;
 
 namespace bank.Core
 {
-
     public class Account
     {
         public string AccountNumber { get; set; }
         public decimal Balance { get; protected set; }
         public User Owner { get; set; }
+        public string AccountType { get; protected set; }
+        public string Currency { get; set; }
 
-        // Transaction v40 - lista för att lagra transaktioner
+        // Lista för att lagra transaktioner
         public List<Transaction> Transactions { get; } = new();
 
-        public Account(string accountNumber, User owner)
+        public Account(string accountNumber, User owner, string accountType = "Generic", string currency = "SEK")
         {
             AccountNumber = accountNumber;
             Owner = owner;
             Balance = 0;
+            AccountType = accountType;
+            Currency = currency;
         }
 
         public virtual void Deposit(decimal amount)
         {
             if (amount <= 0)
             {
-                Console.WriteLine("\nDeposit failed: The amount must be greater then 0..");
+                Console.WriteLine("\nDeposit failed: The amount must be greater than 0.");
                 return;
             }
 
             Balance += amount;
-            
+
             Transactions.Add(new Transaction(
                 id: Guid.NewGuid().ToString("N"),
                 accountNumber: AccountNumber,
@@ -41,24 +44,25 @@ namespace bank.Core
                 amount: amount
             ));
 
-            Console.WriteLine($"\nDeposit succeeded: {amount} kr. New Balance = {Balance} kr.");
+            Console.WriteLine($"\nDeposit succeeded: {amount} {Currency}. New Balance = {Balance} {Currency}.");
         }
+
         public virtual void Withdraw(decimal amount)
         {
             if (amount <= 0)
             {
-                Console.WriteLine("\nWithdraw failed: The amount must be greater then 0.");
+                Console.WriteLine("\nWithdraw failed: The amount must be greater than 0.");
                 return;
             }
 
             if (amount > Balance)
             {
-                Console.WriteLine("\nWithdraw failed: unsufficient balance");
+                Console.WriteLine("\nWithdraw failed: insufficient balance.");
                 return;
             }
 
             Balance -= amount;
-          
+
             Transactions.Add(new Transaction(
                 id: Guid.NewGuid().ToString("N"),
                 accountNumber: AccountNumber,
@@ -67,7 +71,8 @@ namespace bank.Core
                 amount: amount
             ));
 
-            Console.WriteLine($"\nWithdraw succeded: -{amount} kr. New balance = {Balance} kr.");
         }
+
     }
 }
+

@@ -10,39 +10,61 @@ namespace bank.Core
     {
         public decimal OverdraftLimit { get; private set; }
 
-        public CheckingAccount(string accountNumber, User owner, decimal overdraftLimit = 1000)
-            : base(accountNumber, owner)
+        public decimal AvailableFunds => Balance + OverdraftLimit;
+
+        public CheckingAccount(string accountNumber, User owner, string accountType, string currency, decimal overdraftLimit = 1000m)
+            : base(accountNumber, owner, accountType, currency)
+
         {
+            if (string.IsNullOrWhiteSpace(accountNumber))
+                throw new ArgumentException("Account number is required.", nameof(accountNumber));
+            if (owner is null)
+                throw new ArgumentNullException(nameof(owner), "Owner (User) cannot be null.");
+            if (overdraftLimit < 0)
+                throw new ArgumentOutOfRangeException(nameof(overdraftLimit), "OverdraftLimit must be ≥ 0.");
+
             OverdraftLimit = overdraftLimit;
         }
+
+        public void SetOverdraftLimit(decimal newLimit)
+        {
+            if (newLimit < 0)
+                throw new ArgumentOutOfRangeException(nameof(newLimit), "OverdraftLimit must be ≥ 0.");
+            OverdraftLimit = newLimit;
+        }
+
         public override void Withdraw(decimal amount)
         {
             if (amount <= 0)
             {
-                Console.WriteLine("\nWithdraw failed: The amount must be greater than 0.");
+                Console.WriteLine("\nWithdraw failed: amount must be greater than 0.");
                 return;
             }
 
-            // Tillåter övertrassering ned till OverdraftLimit
-            if (Balance - amount < -OverdraftLimit)
+            decimal projected = Balance - amount;
+            decimal minAllowed = -OverdraftLimit;
+
+            if (projected < minAllowed)
             {
-                Console.WriteLine($"\nWithdraw failed: Overdraft limit of {-OverdraftLimit} kr exceeded.");
+                Console.WriteLine(
+                    $"\nWithdraw denied: overdraft limit exceeded." +
+                    $"\nAmount: {amount} {Currency} | Balance: {Balance} {Currency} | Available: {AvailableFunds} {Currency} | Min allowed balance: {minAllowed} {Currency}");
                 return;
             }
 
+            Balance = projected;
 
-            Balance -= amount;
-
-            //loggar en transaktion
             Transactions.Add(new Transaction(
-                id: Guid.NewGuid().ToString("N"),   //Skapar ett unikt ID för transaktionen
+                id: Guid.NewGuid().ToString("N"),
                 accountNumber: AccountNumber,
                 timeStamp: DateTime.UtcNow,
                 type: "Withdraw",
                 amount: amount
             ));
 
-            Console.WriteLine($"\nWithdraw succeeded: {amount} kr. New balance = {Balance} kr.");
+            Console.WriteLine($"\nWithdraw succeeded: {amount} {Currency}. New balance = {Balance} {Currency}.");
         }
+
+
     }
 }
