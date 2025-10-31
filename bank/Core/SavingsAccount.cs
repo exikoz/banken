@@ -1,4 +1,5 @@
-﻿using System;
+﻿using bank.Attributes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,14 +23,10 @@ namespace bank.Core
             return $"TX-{AccountNumber}-{transactionCounter:D4}";
         }
 
+
+        [ValidateInput(Min ="10", Max = "1000")]
         public override void Deposit(decimal amount)
         {
-            if (amount <= 0)
-            {
-                Console.WriteLine("Deposit must be greater than 0.");
-                return;
-            }
-
             base.Deposit(amount);
 
             var tx = new Transaction(GenerateTransactionId(), AccountNumber, DateTime.Now, "Deposit", amount);
@@ -38,14 +35,12 @@ namespace bank.Core
             Console.WriteLine($"Deposited {amount} {Currency}. Balance: {Balance} {Currency}");
         }
 
+
+
+
+
         public override void Withdraw(decimal amount)
         {
-            if (amount <= 0)
-            {
-                Console.WriteLine("Withdrawal must be greater than 0.");
-                return;
-            }
-
             decimal total = amount;
             bool feeApplied = false;
 

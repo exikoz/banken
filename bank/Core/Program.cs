@@ -1,4 +1,7 @@
-﻿using System.Threading;
+﻿using bank.Attributes;
+using bank.Services;
+using System.Threading;
+using System.Transactions;
 
 namespace bank.Core
 {
@@ -9,7 +12,20 @@ namespace bank.Core
             var menu = new Menu();
             menu.DrawUI();
             //menu.BankApp();
+
         }
+
+
     }
+
+
+
+
+
+
+
+
+
 }
+
 

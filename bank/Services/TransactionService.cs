@@ -22,20 +22,8 @@ namespace bank.Services
             Console.WriteLine($"{"Date and Time",-22} | {"Type",-10} | {"Amount",-15} | {"Currency",-8} | {"Account",-10} | {"Account Type",-12}");
             Console.WriteLine(new string('-', 90));
 
-            var allTransactions = currentUser.Accounts
-                .SelectMany(a => a.Transactions.Select(t => new { Account = a, Transaction = t }))
-                .OrderByDescending(x => x.Transaction.TimeStamp)
-                .ToList();
-
-            if (!allTransactions.Any())
-            {
-                Console.WriteLine("No transactions found.");
-                Console.WriteLine("\nPress any key to return to menu...");
-                Console.ReadKey();
-                return;
-            }
-
-            foreach (var x in allTransactions)
+            /*
+            foreach (var t in allTransactions)
             {
                 var a = x.Account;
                 var t = x.Transaction;
@@ -49,6 +37,8 @@ namespace bank.Services
             Console.WriteLine(new string('-', 90));
             Console.WriteLine("\nPress any key to return to menu...");
             Console.ReadKey();
+            */
+
         }
     }
 }

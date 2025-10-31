@@ -28,7 +28,7 @@ namespace bank.Services
             Console.WriteLine("=== LOG IN ===\n");
 
             Console.Write("Enter User ID: ");
-            var userId = Console.ReadLine();
+            var userId = Console.ReadLine() ?? "-1";
 
             if (string.IsNullOrWhiteSpace(userId))
             {
@@ -41,7 +41,13 @@ namespace bank.Services
 
             if (user == null)
             {
-                Console.WriteLine("\n✗ User not found!");
+                Console.WriteLine("\n User not found!");
+                Console.ReadKey();
+                return null;
+            }
+            if (user.isBlocked)
+            {
+                Console.WriteLine("\n User is blocked due to too many failed login attempts. Contact admin.");
                 Console.ReadKey();
                 return null;
             }
@@ -98,32 +104,15 @@ namespace bank.Services
         /// <summary>
         /// Validates PIN with a maximum of 3 attempts
         /// </summary>
-        private User? ValidatePINWithRetries(User? user, int maxAttempts = 3)
+        private User? ValidatePINWithRetries(User user)
         {
-            // Om användaren inte hittades
-            if (user == null)
-            {
-                Console.WriteLine("\n✗ User not found. Returning to the menu.");
-                Console.ReadKey();
-                return null;
-            }
-
-            // Om användaren redan är låst
-            if (user.IsLocked)
-            {
-                Console.WriteLine("\n✗ This account is locked. Contact an admin.");
-                Console.ReadKey();
-                return null;
-            }
-
-            int attempts = 0;
-
-            while (attempts < maxAttempts)
+            int maxAttempts = user.MaxFailedLoginAttempts;
+            while (user.FailedLoginAttempts < maxAttempts)
             {
                 Console.Write("Enter PIN (4 digits): ");
                 var pin = ReadPassword();
 
-                if (user.ValidatePIN(pin))
+                if (user.ValidatePIN(pin) && !user.isBlocked)
                 {
                     // Om kontot var låst av misstag — lås upp (säkerhetsåtgärd)
                     if (user.IsLocked) user.Unlock();
@@ -133,13 +122,11 @@ namespace bank.Services
                     return user;
                 }
 
-                attempts++;
-                Console.WriteLine($"\n✗ Incorrect PIN! Attempts remaining: {maxAttempts - attempts}");
+                user.FailedLoginAttempts++;
+                Console.WriteLine($"\n Incorrect PIN! Attempts remaining: {maxAttempts - user.FailedLoginAttempts}");
             }
 
-            // Om användaren misslyckas 3 gånger
-            user.Lock();
-            Console.WriteLine("\n✗ Too many incorrect attempts. Your account has been locked. Contact an admin.");
+            Console.WriteLine("\n Too many incorrect attempts. User is now blocked, contact admin.");
             Console.ReadKey();
             return null;
         }
@@ -186,6 +173,7 @@ namespace bank.Services
 
             return name;
         }
+
 
         /// <summary>
         /// Gets and confirms a PIN from user input
