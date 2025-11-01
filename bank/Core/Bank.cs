@@ -29,14 +29,32 @@ namespace bank.Core
             string numericId = user.Id.Replace("U", "").Trim();
             string accountNumber = $"{numericId}-{user.Accounts.Count + 1:D2}";
 
-            var currencies = new List<string> { "SEK", "EUR", "USD", "GBP", "NOK", "DKK" };
+            // Hämta valutorna dynamiskt från exchangeRates.json
+            var exchangerateService = new bank.Services.ExchangerateService();
+            var allRates = exchangerateService.getAllRates().ToList();
+
+            // Bygg en lista av alla valutor (både enum och custom)
+            var currencies = allRates.Select(r =>
+                string.IsNullOrWhiteSpace(r.CustomCode)
+                    ? r.Code.ToString()
+                    : r.CustomCode
+            ).Distinct().ToList();
+
+            if (!currencies.Any())
+            {
+                Console.WriteLine("No available currencies found. Please add exchange rates first.");
+                return null!;
+            }
+
             Console.WriteLine("\nSelect currency:");
             for (int i = 0; i < currencies.Count; i++)
                 Console.WriteLine($"{i + 1}. {currencies[i]}");
+
             Console.Write("Choice: ");
             var choice = int.TryParse(Console.ReadLine(), out int c) && c >= 1 && c <= currencies.Count
                 ? currencies[c - 1]
                 : "SEK";
+
 
             Account account;
 

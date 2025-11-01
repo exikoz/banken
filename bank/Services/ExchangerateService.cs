@@ -81,7 +81,5 @@ namespace bank.Services
             Console.WriteLine($"Created exchangeRates.json at {filePath}");
 
         }
-
-
     }
 }

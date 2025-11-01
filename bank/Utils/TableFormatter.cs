@@ -69,13 +69,21 @@ namespace bank.Utils
             Console.WriteLine($"=== {title} ===");
             Console.WriteLine();
 
-            Console.WriteLine(new string('-', 80)); // Simple line separator
+            Console.WriteLine(new string('-', 80));
             Console.ForegroundColor = ConsoleColor.Green;
+
+            // Visa rätt valutakod: antingen CustomCode (om finns) eller Enum Code
             foreach (var rate in rates)
             {
-                Console.WriteLine($"Code: {rate.Code}: Rate:  {rate.Rate}  Last Updated:   {rate.LastUpdated}");
+                string displayCode = string.IsNullOrWhiteSpace(rate.CustomCode)
+                    ? rate.Code.ToString()
+                    : rate.CustomCode;
+
+                Console.WriteLine($"Code: {displayCode,-5}  Rate: {rate.Rate,-10}  Last Updated: {rate.LastUpdated}");
             }
+
             Console.ResetColor();
+
         }
 
 

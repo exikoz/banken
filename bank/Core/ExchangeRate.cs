@@ -5,6 +5,8 @@
         public CurrencyCode Code { get; set; }
         public DateTime LastUpdated { get; set; } = DateTime.Now;
         public decimal Rate { get; set; }
+        public string? CustomCode { get; set; }
+
 
 
         public ExchangeRate() { }

@@ -1,46 +1,56 @@
 [
   {
     "Code": 0,
-    "LastUpdated": "2025-11-01T02:53:28.0884343+01:00",
-    "Rate": 1.0000
+    "CustomCode": null,
+    "Rate": 1.00,
+    "LastUpdated": "2025-11-01T18:00:00+01:00"
   },
   {
     "Code": 1,
-    "LastUpdated": "2025-11-01T02:53:28.0884343+01:00",
-    "Rate": 0.0910
+    "CustomCode": null,
+    "Rate": 11.00,
+    "LastUpdated": "2025-11-01T18:00:00+01:00"
   },
   {
     "Code": 2,
-    "LastUpdated": "2025-11-01T02:53:28.0884343+01:00",
-    "Rate": 0.0780
+    "CustomCode": null,
+    "Rate": 13.00,
+    "LastUpdated": "2025-11-01T18:00:00+01:00"
   },
   {
     "Code": 4,
-    "LastUpdated": "2025-11-01T02:53:28.0884343+01:00",
-    "Rate": 13.50
+    "CustomCode": null,
+    "Rate": 0.07,
+    "LastUpdated": "2025-11-01T18:00:00+01:00"
   },
   {
     "Code": 5,
-    "LastUpdated": "2025-11-01T02:53:28.0884343+01:00",
-    "Rate": 0.0870
+    "CustomCode": null,
+    "Rate": 12.20,
+    "LastUpdated": "2025-11-01T18:00:00+01:00"
   },
   {
     "Code": 6,
-    "LastUpdated": "2025-11-01T02:53:28.0884343+01:00",
-    "Rate": 0.60
+    "CustomCode": null,
+    "Rate": 7.00,
+    "LastUpdated": "2025-11-01T18:00:00+01:00"
   },
   {
     "Code": 7,
-    "LastUpdated": "2025-11-01T02:53:28.0884343+01:00",
-    "Rate": 0.65
+    "CustomCode": null,
+    "Rate": 7.20,
+    "LastUpdated": "2025-11-01T18:00:00+01:00"
   },
   {
     "Code": 8,
-    "LastUpdated": "2025-11-01T02:53:28.0884343+01:00",
-    "Rate": 0.095
+    "CustomCode": null,
+    "Rate": 1.02,
+    "LastUpdated": "2025-11-01T18:00:00+01:00"
   },
   {
     "Code": 9,
-    "LastUpdated": "2025-11-01T02:53:28.0884343+01:00",
-    "Rate": 0.13
+    "CustomCode": null,
+    "Rate": 1.45,
+    "LastUpdated": "2025-11-01T18:00:00+01:00"
   }
+]
