@@ -53,7 +53,7 @@ namespace bank.Services
             }
 
             // Kolla om kontot är låst innan PIN-fråga
-            if (user.IsLocked)
+            if (user.isBlocked)
             {
                 Console.WriteLine("\n✗ This account is locked due to multiple failed login attempts. Contact an admin.");
                 Console.ReadKey();
@@ -115,7 +115,7 @@ namespace bank.Services
                 if (user.ValidatePIN(pin) && !user.isBlocked)
                 {
                     // Om kontot var låst av misstag — lås upp (säkerhetsåtgärd)
-                    if (user.IsLocked) user.Unlock();
+                    if (user.isBlocked) user.FailedLoginAttempts = 0;
 
                     Console.WriteLine($"\n✓ Welcome {user.Name}!");
                     Console.ReadKey();

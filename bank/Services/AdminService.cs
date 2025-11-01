@@ -176,12 +176,13 @@ namespace bank.Services
             var rates = searchService.GetAllExchangeRates();
 
 
+            Console.WriteLine("Available currencies:");
 
             TableFormatter.DisplayRatesTable(rates, "");
 
             if (!rates.Any())
             {
-                Console.WriteLine("No exchangerates added yet. Time to add one!");
+                exchangerateService.initJson();
                 var codes = Enum.GetValues<CurrencyCode>();
                 foreach (var code in codes)
                 {
@@ -189,6 +190,7 @@ namespace bank.Services
                 }
 
             }
+
             Console.WriteLine("Pick a rate to add or update by typing in their code:\n");
 
 
@@ -201,9 +203,16 @@ namespace bank.Services
                 return;
             }
 
-            if (!int.TryParse(selectedRate, out var choice))
+            if (selectedRate.ToLower() == "sek")
             {
-                Console.WriteLine("\n Invalid choice. Needs to be a number");
+                Console.WriteLine("Cannot change the base currency");
+                        TableFormatter.PauseForUser();
+                return;
+            }
+
+            if(!Enum.TryParse(selectedRate, true, out CurrencyCode choice))
+            {
+                Console.WriteLine("Invalid currency code. Choose one on the list.");
                 TableFormatter.PauseForUser();
                 return;
             }
@@ -219,7 +228,7 @@ namespace bank.Services
                     Console.WriteLine($"{(int)code}. {code}");
                 }
             }
-            else if(choice < 0 || choice >= rates.Count())
+            else if(choice < 0)
             {
                 Console.WriteLine("\n Invalid choice. Needs to be one of the listed rates");
                 TableFormatter.PauseForUser();
@@ -235,7 +244,14 @@ namespace bank.Services
                 return;
             }
 
-            
+            if (newRate <= 0 || newRate >= 999)
+            {
+                Console.WriteLine("\n Exchange rate cannot be too low or high!");
+                TableFormatter.PauseForUser();
+                return;
+            }
+
+
             exchangerateService.AddRates(new ExchangeRate((CurrencyCode)choice, newRate));
             TableFormatter.PauseForUser();
         }
