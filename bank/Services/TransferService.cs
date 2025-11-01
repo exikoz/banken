@@ -9,12 +9,14 @@ namespace bank.Services
     public class TransferService
     {
         private readonly Bank bank;
-        private readonly AccountService accountService; 
+        private readonly AccountService accountService;
+        private readonly ExchangerateService exchangeRateService = new ExchangerateService();
 
         public TransferService(Bank bank, AccountService accountService)
         {
             this.bank = bank ?? throw new ArgumentNullException(nameof(bank));
             this.accountService = accountService ?? throw new ArgumentNullException(nameof(accountService));
+
         }
 
         public void DoTransferOwn(User currentUser)
@@ -209,9 +211,13 @@ namespace bank.Services
                 Console.WriteLine("Transfer: Insufficient funds.");
                 return false;
             }
-
+            decimal convertedAmount = amount;
+            if (from.Currency != to.Currency)
+            {
+                convertedAmount = exchangeRateService.ConvertCurrency(amount, from.Currency, to.Currency);
+            }
             from.Withdraw(amount);
-            to.Deposit(amount);
+            to.Deposit(convertedAmount);
 
             Console.WriteLine($"Transfer: {amount} {from.Currency} transferred from {fromAccountNumber} to {toAccountNumber}.");
             return true;
@@ -252,9 +258,13 @@ namespace bank.Services
                 Console.WriteLine("Transfer: Insufficient funds or overdraft limit reached.");
                 return false;
             }
-
+            decimal convertedAmount = amount;
+            if (from.Currency != to.Currency)
+            {
+                convertedAmount = exchangeRateService.ConvertCurrency(amount, from.Currency, to.Currency);
+            }
             from.Withdraw(amount);
-            to.Deposit(amount);
+            to.Deposit(convertedAmount);
 
             Console.WriteLine($"Transfer: {amount} {from.Currency} sent from {sender.Name} ({from.AccountNumber}) to {to.Owner.Name} ({to.AccountNumber}).");
             return true;

@@ -2,6 +2,7 @@
 using bank.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -118,7 +119,7 @@ namespace bank.Utils
             var dataSet = DeserializeJson<T>(filePath);
             if (dataSet == null)
             {
-                WriteJson(newData, filePath);
+               Console.WriteLine("No data found.");
             }
             ;
 

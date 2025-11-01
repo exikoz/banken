@@ -28,7 +28,7 @@ namespace bank.Core
 
 
         public List<Account> Accounts { get; } = new();
-        public User(string id, string name, string pin, UserRole role = UserRole.Admin)
+        public User(string id, string name, string pin, UserRole role = UserRole.Customer)
         {
             if (string.IsNullOrWhiteSpace(id))
                 Console.WriteLine(nameof(id), " missing or couldn't be fetched");
