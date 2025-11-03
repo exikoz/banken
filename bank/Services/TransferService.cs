@@ -32,65 +32,90 @@ namespace bank.Services
                 return;
             }
 
-          
-
-            Console.Clear();
-            Console.WriteLine("=== SELECT SOURCE ACCOUNT ===\n");
-            for (int i = 0; i < currentUser.Accounts.Count; i++)
+            while (true)
             {
-                var acc = currentUser.Accounts[i];
-                Console.WriteLine($"{i + 1}. {acc.AccountNumber} | Balance: {acc.Balance} {acc.Currency}");
-            }
+                // Filtrera endast konton med saldo > 0
+                var sourceAccounts = currentUser.Accounts.Where(a => a.Balance > 0).ToList();
+                if (!sourceAccounts.Any())
+                {
+                    Console.WriteLine("No accounts with positive balance available for transfer.");
+                    Console.ReadKey();
+                    return;
+                }
 
-            Console.Write("\nChoose source (number): ");
-            if (!int.TryParse(Console.ReadLine(), out var srcIdx) || srcIdx < 1 || srcIdx > currentUser.Accounts.Count)
-            {
-                Console.WriteLine("✗ Invalid selection.");
+                Console.Clear();
+                Console.WriteLine("=== SELECT SOURCE ACCOUNT ===\n");
+                for (int i = 0; i < sourceAccounts.Count; i++)
+                {
+                    var acc = sourceAccounts[i];
+                    Console.WriteLine($"{i + 1}. {acc.AccountNumber} | Balance: {acc.Balance:N2} {acc.Currency}");
+                }
+
+                Console.Write("\nChoose source (number): ");
+                if (!int.TryParse(Console.ReadLine(), out var srcIdx) || srcIdx < 1 || srcIdx > sourceAccounts.Count)
+                {
+                    Console.WriteLine("\nInvalid selection. Please try again.");
+                    Console.ReadKey();
+                    continue; // börja om i loopen istället för att avsluta
+                }
+
+                var fromAcc = sourceAccounts[srcIdx - 1];
+
+                // Välj mål-konto (alla andra konton, även tomma)
+                var destinationAccounts = currentUser.Accounts.Where(a => a.AccountNumber != fromAcc.AccountNumber).ToList();
+
+                Console.Clear();
+                Console.WriteLine("=== SELECT DESTINATION ACCOUNT ===\n");
+                for (int i = 0; i < destinationAccounts.Count; i++)
+                {
+                    var acc = destinationAccounts[i];
+                    Console.WriteLine($"{i + 1}. {acc.AccountNumber} | Balance: {acc.Balance:N2} {acc.Currency}");
+                }
+
+                Console.Write("\nChoose destination (number): ");
+                if (!int.TryParse(Console.ReadLine(), out var dstIdx) || dstIdx < 1 || dstIdx > destinationAccounts.Count)
+                {
+                    Console.WriteLine("\nInvalid selection. Please try again.");
+                    Console.ReadKey();
+                    continue;
+                }
+
+                var toAcc = destinationAccounts[dstIdx - 1];
+
+                Console.Write($"\nAmount ({fromAcc.Currency}): ");
+                if (!decimal.TryParse(Console.ReadLine(), out var amount) || amount <= 0)
+                {
+                    Console.WriteLine("\nInvalid amount. Please enter a positive number.");
+                    Console.ReadKey();
+                    continue;
+                }
+
+                if (amount > fromAcc.Balance)
+                {
+                    Console.WriteLine("\nInsufficient funds in selected account.");
+                    Console.ReadKey();
+                    continue;
+                }
+
+                // Utför valutakonvertering om nödvändigt
+                decimal convertedAmount = amount;
+                if (fromAcc.Currency != toAcc.Currency)
+                {
+                    convertedAmount = exchangeRateService.ConvertCurrency(amount, fromAcc.Currency, toAcc.Currency);
+                    Console.WriteLine($"\nCurrency converted: {amount:N2} {fromAcc.Currency} = {convertedAmount:N2} {toAcc.Currency}");
+                }
+
+                // Genomför överföringen
+                fromAcc.Withdraw(amount);
+                toAcc.Deposit(convertedAmount);
+
+                Console.WriteLine($"\n✓ Transfer completed: {amount:N2} {fromAcc.Currency} from {fromAcc.AccountNumber} to {toAcc.AccountNumber}");
+                Console.WriteLine("Press any key to continue...");
                 Console.ReadKey();
-                return;
+                break;
             }
-
-            var fromAcc = currentUser.Accounts[srcIdx - 1];
-
-            Console.Clear();
-            Console.WriteLine("=== SELECT DESTINATION ACCOUNT ===\n");
-            for (int i = 0; i < currentUser.Accounts.Count; i++)
-            {
-                var acc = currentUser.Accounts[i];
-                Console.WriteLine($"{i + 1}. {acc.AccountNumber} | Balance: {acc.Balance} {acc.Currency}");
-            }
-
-            Console.Write("\nChoose destination (number): ");
-            if (!int.TryParse(Console.ReadLine(), out var dstIdx) || dstIdx < 1 || dstIdx > currentUser.Accounts.Count)
-            {
-                Console.WriteLine("✗ Invalid selection.");
-                Console.ReadKey();
-                return;
-            }
-
-            if (dstIdx == srcIdx)
-            {
-                Console.WriteLine("✗ Destination must be different from source.");
-                Console.ReadKey();
-                return;
-            }
-
-            var toAcc = currentUser.Accounts[dstIdx - 1];
-
-            Console.Write($"\nAmount ({fromAcc.Currency}): ");
-            var amountRaw = Console.ReadLine();
-            if (!decimal.TryParse(amountRaw, out var amount))
-            {
-                Console.WriteLine("✗ Invalid amount.");
-                Console.ReadKey();
-                return;
-            }
-
-            var ok = TransferOwn(currentUser, fromAcc.AccountNumber, toAcc.AccountNumber, amount);
-            Console.WriteLine(ok ? "✓ Transfer completed." : "✗ Transfer failed.");
-            Console.WriteLine("Press any key to continue...");
-            Console.ReadKey();
         }
+
 
         // Reworked to show user's own accounts selection directly, then ask recipient details
         public void DoTransferToOther(User currentUser)
@@ -98,88 +123,100 @@ namespace bank.Services
             Console.Clear();
             Console.WriteLine("=== TRANSFER TO ANOTHER CUSTOMER ===\n");
 
-            if (currentUser.Accounts.Count == 0)
+            while (true)
             {
-                Console.WriteLine("You have no accounts to transfer from.");
+                // Visa endast konton med saldo > 0
+                var availableAccounts = currentUser.Accounts.Where(a => a.Balance > 0).ToList();
+                if (!availableAccounts.Any())
+                {
+                    Console.WriteLine("You have no accounts with a positive balance to transfer from.");
+                    Console.ReadKey();
+                    return;
+                }
+
+                Console.Clear();
+                Console.WriteLine("=== SELECT YOUR ACCOUNT TO SEND FROM ===\n");
+                for (int i = 0; i < availableAccounts.Count; i++)
+                {
+                    var acc = availableAccounts[i];
+                    Console.WriteLine($"{i + 1}. {acc.AccountNumber} | Balance: {acc.Balance:N2} {acc.Currency}");
+                }
+
+                Console.Write("\nChoose source (number): ");
+                if (!int.TryParse(Console.ReadLine(), out var srcIdx) || srcIdx < 1 || srcIdx > availableAccounts.Count)
+                {
+                    Console.WriteLine("\nInvalid selection. Please try again.");
+                    Console.ReadKey();
+                    continue; // användaren får försöka igen
+                }
+
+                var fromAcc = availableAccounts[srcIdx - 1];
+
+                Console.Clear();
+                Console.WriteLine("=== ENTER RECIPIENT DETAILS ===\n");
+
+                Console.Write("Recipient name: ");
+                var recipientName = Console.ReadLine()?.Trim();
+
+                Console.Write("Recipient account number: ");
+                var toAccNumber = Console.ReadLine()?.Trim();
+
+                if (string.IsNullOrWhiteSpace(toAccNumber))
+                {
+                    Console.WriteLine("\nInvalid recipient account number.");
+                    Console.ReadKey();
+                    continue;
+                }
+
+                var toAccount = bank.FindAccount(toAccNumber);
+                if (toAccount == null)
+                {
+                    Console.WriteLine("\nRecipient account not found.");
+                    Console.ReadKey();
+                    continue;
+                }
+
+                if (toAccount.Owner == currentUser)
+                {
+                    Console.WriteLine("\nThis account belongs to you. Use 'transfer between own accounts' instead.");
+                    Console.ReadKey();
+                    continue;
+                }
+
+                Console.Write($"\nAmount ({fromAcc.Currency}): ");
+                if (!decimal.TryParse(Console.ReadLine(), out var amount) || amount <= 0)
+                {
+                    Console.WriteLine("\nInvalid amount. Please enter a positive number.");
+                    Console.ReadKey();
+                    continue;
+                }
+
+                if (amount > fromAcc.Balance)
+                {
+                    Console.WriteLine("\nInsufficient funds in selected account.");
+                    Console.ReadKey();
+                    continue;
+                }
+
+                // Valutakonvertering om nödvändigt
+                decimal convertedAmount = amount;
+                if (fromAcc.Currency != toAccount.Currency)
+                {
+                    convertedAmount = exchangeRateService.ConvertCurrency(amount, fromAcc.Currency, toAccount.Currency);
+                    Console.WriteLine($"\nCurrency converted: {amount:N2} {fromAcc.Currency} = {convertedAmount:N2} {toAccount.Currency}");
+                }
+
+                // Genomför överföring
+                fromAcc.Withdraw(amount);
+                toAccount.Deposit(convertedAmount);
+
+                Console.WriteLine($"\n✓ Successfully transferred {amount:N2} {fromAcc.Currency} from {fromAcc.AccountNumber} to {recipientName} ({toAccNumber}).");
+                Console.WriteLine("Press any key to continue...");
                 Console.ReadKey();
-                return;
+                break; // avsluta loopen efter lyckad överföring
             }
-
-            
-
-            Console.Clear();
-            Console.WriteLine("=== SELECT YOUR ACCOUNT TO SEND FROM ===\n");
-            for (int i = 0; i < currentUser.Accounts.Count; i++)
-            {
-                var acc = currentUser.Accounts[i];
-                Console.WriteLine($"{i + 1}. {acc.AccountNumber} | Balance: {acc.Balance} {acc.Currency}");
-            }
-
-            Console.Write("\nChoose source (number): ");
-            if (!int.TryParse(Console.ReadLine(), out var srcIdx) || srcIdx < 1 || srcIdx > currentUser.Accounts.Count)
-            {
-                Console.WriteLine("✗ Invalid selection.");
-                Console.ReadKey();
-                return;
-            }
-
-            var fromAcc = currentUser.Accounts[srcIdx - 1];
-
-            // Ask for recipient details
-            Console.Clear();
-            Console.WriteLine("=== ENTER RECIPIENT DETAILS ===\n");
-
-            Console.Write("Recipient name: ");
-            var recipientName = Console.ReadLine()?.Trim();
-
-            Console.Write("Recipient account number: ");
-            var toAccNumber = Console.ReadLine()?.Trim();
-
-            if (string.IsNullOrWhiteSpace(toAccNumber))
-            {
-                Console.WriteLine("✗ Invalid recipient account number.");
-                Console.ReadKey();
-                return;
-            }
-
-            var toAccount = bank.FindAccount(toAccNumber);
-            if (toAccount == null)
-            {
-                Console.WriteLine("✗ Recipient account not found.");
-                Console.ReadKey();
-                return;
-            }
-
-            if (toAccount.Owner == currentUser)
-            {
-                Console.WriteLine("✗ This account belongs to you. Use 'own account' transfer instead.");
-                Console.ReadKey();
-                return;
-            }
-
-            Console.Write($"\nAmount ({fromAcc.Currency}): ");
-            var amountRaw = Console.ReadLine();
-            if (!decimal.TryParse(amountRaw, out var amount))
-            {
-                Console.WriteLine("✗ Invalid amount.");
-                Console.ReadKey();
-                return;
-            }
-
-            var ok = TransferToOther(currentUser, fromAcc.AccountNumber, toAccNumber!, amount);
-
-            if (ok)
-            {
-                Console.WriteLine($"✓ Successfully transferred {amount} {fromAcc.Currency} from {fromAcc.AccountNumber} to {recipientName} ({toAccNumber}).");
-            }
-            else
-            {
-                Console.WriteLine("✗ Transfer failed.");
-            }
-
-            Console.WriteLine("Press any key to continue...");
-            Console.ReadKey();
         }
+
 
 
 
