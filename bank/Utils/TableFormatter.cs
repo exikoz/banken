@@ -69,13 +69,21 @@ namespace bank.Utils
             Console.WriteLine($"=== {title} ===");
             Console.WriteLine();
 
-            Console.WriteLine(new string('-', 80)); // Simple line separator
+            Console.WriteLine(new string('-', 80));
             Console.ForegroundColor = ConsoleColor.Green;
+
+            // Visa rätt valutakod: antingen CustomCode (om finns) eller Enum Code
             foreach (var rate in rates)
             {
-                Console.WriteLine($"Code: {rate.Code}: Rate:  {rate.Rate}  Last Updated:   {rate.LastUpdated}");
+                string displayCode = string.IsNullOrWhiteSpace(rate.CustomCode)
+                    ? rate.Code.ToString()
+                    : rate.CustomCode;
+
+                Console.WriteLine($"Code: {displayCode,-5}  Rate: {rate.Rate,-10}  Last Updated: {rate.LastUpdated}");
             }
+
             Console.ResetColor();
+
         }
 
 
@@ -99,41 +107,46 @@ namespace bank.Utils
             Console.WriteLine();
 
             // Print header
-            Console.WriteLine($"{"Account #",-15} {"Owner ID",-12} {"Owner Name",-20} {"Balance",-15} {"Type",-18}");
-            Console.WriteLine(new string('-', 80)); // Simple line separator
+            Console.WriteLine($"{"Account #",-15} {"Owner ID",-12} {"Owner Name",-20} {"Balance",-15} {"Currency",-10} {"Type",-18}");
+            Console.WriteLine(new string('-', 90));
+
+            var exchangerateService = new bank.Services.ExchangerateService();
 
             // Print each account
             foreach (var account in accounts)
             {
                 string accountType = account.GetType().Name;
 
-                // Change color based on balance
                 if (account.Balance > 5000)
-                {
                     Console.ForegroundColor = ConsoleColor.Green;
-                }
                 else if (account.Balance > 1000)
-                {
                     Console.ForegroundColor = ConsoleColor.Yellow;
-                }
 
                 Console.WriteLine(
                     $"{account.AccountNumber,-15} " +
                     $"{account.Owner.Id,-12} " +
                     $"{account.Owner.Name,-20} " +
-                    $"{account.Balance,-15:C} " +
+                    $"{account.Balance,10:N2} " +
+                    $"{account.Currency,-10} " +
                     $"{accountType,-18}"
                 );
 
                 Console.ResetColor();
             }
 
-            // Print footer
-            Console.WriteLine(new string('-', 80));
-            decimal totalBalance = accounts.Sum(a => a.Balance);
+            // Calculate total balance in SEK using conversion
+            decimal totalBalanceSek = 0;
+            foreach (var acc in accounts)
+            {
+                totalBalanceSek += exchangerateService.ConvertToSek(acc.Currency, acc.Balance);
+            }
+
+            // Footer
+            Console.WriteLine(new string('-', 90));
             Console.WriteLine($"Total accounts: {accounts.Count}");
-            Console.WriteLine($"Total balance: {totalBalance:C}");
+            Console.WriteLine($"Total balance (converted to SEK): {totalBalanceSek:N2} kr");
         }
+
 
         /// <summary>
         /// Pause and wait for user to press a key

@@ -84,7 +84,7 @@ namespace bank.Core
                 Console.WriteLine("No free withdrawals remaining — next withdrawal will include a fee.");
         }
 
-        // Simple interest calculation
+        // Dynamisk ränteberäkning med stigande ränta efter 12 månader
         public decimal CalculateFutureBalance(decimal annualInterestRate, int months)
         {
             if (annualInterestRate < 0 || months < 0)
@@ -93,17 +93,27 @@ namespace bank.Core
                 return Balance;
             }
 
-            decimal interest = Balance * (annualInterestRate / 100) * (months / 12m);
+            // Grundränta hämtas från bankens standard
+            decimal baseRate = annualInterestRate;
+            decimal monthlyRateIncrease = 0.1m;
+
+            decimal effectiveRate = baseRate;
+            if (months > 12)
+                effectiveRate += (months - 12) * monthlyRateIncrease;
+
+            decimal interest = Math.Round(Balance * (effectiveRate / 100m) * (months / 12m), 2);
             decimal futureBalance = Balance + interest;
 
-            Console.WriteLine($"\nSimple interest calculation:");
+            Console.WriteLine($"\nInterest calculation summary:");
             Console.WriteLine($"Current balance: {Balance} {Currency}");
-            Console.WriteLine($"Annual interest rate: {annualInterestRate}%");
             Console.WriteLine($"Period: {months} months");
-            Console.WriteLine($"Interest cost: {interest} {Currency}");
-            Console.WriteLine($"Total loan + interest: {futureBalance} {Currency}\n");
+            Console.WriteLine($"Interest rate: {annualInterestRate:N2}%");
+            Console.WriteLine($"Interest earned: {interest:N2} {Currency}");
+            Console.WriteLine($"Future balance: {futureBalance:N2} {Currency}\n");
+
 
             return futureBalance;
         }
+
     }
 }

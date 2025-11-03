@@ -11,6 +11,8 @@ namespace bank.Core
     {
         public List<User> Users { get; } = new();
         public List<Account> Accounts { get; } = new();
+        public decimal DefaultSavingsInterestRate { get; private set; } = 3.0m;
+
 
         public Bank() { }
 
@@ -29,14 +31,32 @@ namespace bank.Core
             string numericId = user.Id.Replace("U", "").Trim();
             string accountNumber = $"{numericId}-{user.Accounts.Count + 1:D2}";
 
-            var currencies = new List<string> { "SEK", "EUR", "USD", "GBP", "NOK", "DKK" };
+            // Hämta valutorna dynamiskt från exchangeRates.json
+            var exchangerateService = new bank.Services.ExchangerateService();
+            var allRates = exchangerateService.getAllRates().ToList();
+
+            // Bygg en lista av alla valutor (både enum och custom)
+            var currencies = allRates.Select(r =>
+                string.IsNullOrWhiteSpace(r.CustomCode)
+                    ? r.Code.ToString()
+                    : r.CustomCode
+            ).Distinct().ToList();
+
+            if (!currencies.Any())
+            {
+                Console.WriteLine("No available currencies found. Please add exchange rates first.");
+                return null!;
+            }
+
             Console.WriteLine("\nSelect currency:");
             for (int i = 0; i < currencies.Count; i++)
                 Console.WriteLine($"{i + 1}. {currencies[i]}");
+
             Console.Write("Choice: ");
             var choice = int.TryParse(Console.ReadLine(), out int c) && c >= 1 && c <= currencies.Count
                 ? currencies[c - 1]
                 : "SEK";
+
 
             Account account;
 
@@ -163,5 +183,14 @@ namespace bank.Core
 
         // Find user by ID
         public User? FindUser(string userId) => Users.FirstOrDefault(u => u.Id == userId);
+
+
+        public void UpdateDefaultSavingsRate(decimal newRate)
+        {
+            if (newRate > 0 && newRate < 10)
+                DefaultSavingsInterestRate = newRate;
+            else
+                Console.WriteLine("Interest rate must be between 0 and 10%");
+        }
     }
 }
