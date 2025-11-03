@@ -10,10 +10,13 @@ namespace bank.Services
     public class AccountService
     {
         private readonly Bank bank;
+        private readonly ExchangerateService exchangerateService;
+
 
         public AccountService(Bank bank)
         {
             this.bank = bank;
+            this.exchangerateService = new ExchangerateService();
         }
 
         /// <summary>
@@ -66,6 +69,15 @@ namespace bank.Services
                     Console.WriteLine("─────────────────────");
                 }
             }
+
+            // Calculate and display total balance in SEK
+            decimal totalInSek = 0;
+            foreach (var acc in currentUser.Accounts)
+            {
+                totalInSek += exchangerateService.ConvertToSek(acc.Currency, acc.Balance);
+            }
+            Console.WriteLine($"\nTotal balance (in SEK): {totalInSek:N2} SEK");
+
 
             Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();

@@ -11,6 +11,8 @@ namespace bank.Core
     {
         public List<User> Users { get; } = new();
         public List<Account> Accounts { get; } = new();
+        public decimal DefaultSavingsInterestRate { get; private set; } = 3.0m;
+
 
         public Bank() { }
 
@@ -181,5 +183,14 @@ namespace bank.Core
 
         // Find user by ID
         public User? FindUser(string userId) => Users.FirstOrDefault(u => u.Id == userId);
+
+
+        public void UpdateDefaultSavingsRate(decimal newRate)
+        {
+            if (newRate > 0 && newRate < 10)
+                DefaultSavingsInterestRate = newRate;
+            else
+                Console.WriteLine("Interest rate must be between 0 and 10%");
+        }
     }
 }

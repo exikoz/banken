@@ -81,5 +81,27 @@ namespace bank.Services
             Console.WriteLine($"Created exchangeRates.json at {filePath}");
 
         }
+
+        // Converts any currency amount to SEK based on exchangeRates.json
+        public decimal ConvertToSek(string currencyCode, decimal amount)
+        {
+            if (string.Equals(currencyCode, "SEK", StringComparison.OrdinalIgnoreCase))
+                return amount; // Base currency, no conversion needed
+
+            var rates = getAllRates();
+            var rate = rates.FirstOrDefault(r =>
+                (r.CustomCode != null && r.CustomCode.Equals(currencyCode, StringComparison.OrdinalIgnoreCase))
+                || r.Code.ToString().Equals(currencyCode, StringComparison.OrdinalIgnoreCase));
+
+            if (rate == null || rate.Rate <= 0)
+            {
+                Console.WriteLine($"Warning: No valid exchange rate found for {currencyCode}. Assuming 1:1.");
+                return amount;
+            }
+
+            // Convert to SEK
+            return amount * rate.Rate;
+        }
+
     }
 }

@@ -36,9 +36,10 @@ namespace bank.Services
                 Console.WriteLine("3. View All Accounts");
                 Console.WriteLine("4. View All Exchange rates");
                 Console.WriteLine("5. Add/Update Exchange rates");
-                Console.WriteLine("6. Unblock users");
-                Console.WriteLine("7. Back to Main Menu");
-                Console.Write("\nChoose option: ");
+                Console.WriteLine("6. Update Savings Interest Rate");
+                Console.WriteLine("7. Update Loan Interest Rate");
+                Console.WriteLine("8. Unblock users");
+                Console.WriteLine("9. Back to Main Menu");
 
                 var choice = Console.ReadLine();
 
@@ -60,9 +61,15 @@ namespace bank.Services
                         AddExchangeRate();
                         break;
                     case "6":
-                        UnlockUserBlocks();
+                        UpdateSavingsInterestRate();
                         break;
                     case "7":
+                        UpdateLoanInterestRate();
+                        break;
+                    case "8":
+                        UnlockUserBlocks();
+                        break;
+                    case "9":
                         exit = true;
                         break;
                     default:
@@ -384,6 +391,46 @@ namespace bank.Services
             exchangerateService.AddRates(newRate);
 
             Console.WriteLine($"\nAdded new currency {inputCode} with rate {rate}");
+            TableFormatter.PauseForUser();
+        }
+
+        private void UpdateSavingsInterestRate()
+        {
+            Console.Clear();
+            Console.WriteLine("=== UPDATE SAVINGS INTEREST RATE ===\n");
+            Console.WriteLine($"Current savings interest rate: {bank.DefaultSavingsInterestRate}%");
+
+            Console.Write("\nEnter new rate (%): ");
+            if (decimal.TryParse(Console.ReadLine(), out decimal newRate))
+            {
+                bank.UpdateDefaultSavingsRate(newRate);
+                Console.WriteLine($"\nSavings interest rate updated to {bank.DefaultSavingsInterestRate}%");
+            }
+            else
+            {
+                Console.WriteLine("\nInvalid input.");
+            }
+
+            TableFormatter.PauseForUser();
+        }
+
+        private void UpdateLoanInterestRate()
+        {
+            Console.Clear();
+            Console.WriteLine("=== UPDATE LOAN INTEREST RATE ===\n");
+            Console.WriteLine($"Current loan interest rate: {LoanService.CurrentLoanInterestRate}%");
+
+            Console.Write("\nEnter new rate (%): ");
+            if (decimal.TryParse(Console.ReadLine(), out decimal newRate))
+            {
+                LoanService.SetLoanInterestRate(newRate);
+                Console.WriteLine($"\nLoan interest rate updated to {LoanService.CurrentLoanInterestRate}%");
+            }
+            else
+            {
+                Console.WriteLine("\nInvalid input.");
+            }
+
             TableFormatter.PauseForUser();
         }
     }

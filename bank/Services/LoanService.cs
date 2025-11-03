@@ -7,47 +7,63 @@ namespace bank.Services
     public class LoanService
     {
         private readonly Bank bank;
+        private readonly ExchangerateService exchangerateService;
+
+        // Statisk egenskap för aktuell låneränta (kan ändras från AdminService)
+        public static decimal CurrentLoanInterestRate { get; private set; } = 5.5m;
 
         public LoanService(Bank bank)
         {
             this.bank = bank;
+            this.exchangerateService = new ExchangerateService();
         }
 
-        // Låter användaren ansöka om ett nytt lån
+        // Anropas från AdminService för att uppdatera låneräntan
+        public static void SetLoanInterestRate(decimal newRate)
+        {
+            if (newRate > 0 && newRate < 20)
+            {
+                CurrentLoanInterestRate = newRate;
+            }
+            else
+            {
+                Console.WriteLine("Interest rate must be between 0 and 20%.");
+            }
+        }
+
         public void ApplyForLoan(User currentUser)
         {
             Console.Clear();
             Console.WriteLine("=== APPLY FOR LOAN ===\n");
 
-            // Kontrollera att användaren har konton
             if (currentUser.Accounts == null || !currentUser.Accounts.Any())
             {
-                Console.WriteLine("✗ You have no accounts. Cannot apply for a loan.");
+                Console.WriteLine("You have no accounts. Cannot apply for a loan.");
                 Console.ReadKey();
                 return;
             }
 
-            // Räkna ut användarens totala balans
-            decimal totalBalance = currentUser.Accounts.Sum(a => a.Balance);
-            decimal maxLoan = totalBalance * 5;
+            // Summera alla konton i SEK
+            decimal totalBalanceSek = 0;
+            foreach (var acc in currentUser.Accounts)
+                totalBalanceSek += exchangerateService.ConvertToSek(acc.Currency, acc.Balance);
 
-            var currency = currentUser.Accounts.First().Currency;
-            Console.WriteLine($"Your total balance: {totalBalance} {currency}");
-            Console.WriteLine($"Maximum allowed loan (x5): {maxLoan} {currency}\n");
+            decimal maxLoan = totalBalanceSek * 5;
 
+            Console.WriteLine($"Your total balance: {totalBalanceSek:N2} SEK");
+            Console.WriteLine($"Maximum allowed loan (x5): {maxLoan:N2} SEK\n");
 
-            Console.Write("Enter desired amount: ");
+            Console.Write("Enter desired amount (SEK): ");
             if (!decimal.TryParse(Console.ReadLine(), out var amount) || amount <= 0)
             {
-                Console.WriteLine("\n✗ Invalid amount.");
+                Console.WriteLine("\nInvalid amount.");
                 Console.ReadKey();
                 return;
             }
 
-            // Kontrollera om användaren försöker låna för mycket
             if (amount > maxLoan)
             {
-                Console.WriteLine("\n✗ Loan denied. Requested amount exceeds your limit.");
+                Console.WriteLine("\nLoan denied. Requested amount exceeds your limit.");
                 Console.WriteLine("You can only borrow up to 5x your total account balance.");
                 Console.WriteLine("\nPress any key to continue...");
                 Console.ReadKey();
@@ -57,20 +73,21 @@ namespace bank.Services
             Console.Write("Enter number of months for repayment: ");
             if (!int.TryParse(Console.ReadLine(), out var months) || months <= 0)
             {
-                Console.WriteLine("\n✗ Invalid number of months.");
+                Console.WriteLine("\nInvalid number of months.");
                 Console.ReadKey();
                 return;
             }
 
-            // Enkel fast ränta
-            decimal interestRate = 5.5m;
-            decimal totalRepayment = amount + (amount * (interestRate / 100) * (months / 12m));
+            // Använd den aktuella räntan
+            decimal interestRate = CurrentLoanInterestRate;
+            decimal interestAmount = Math.Round(amount * (interestRate / 100m) * (months / 12m), 2);
+            decimal totalRepayment = amount + interestAmount;
 
-            Console.WriteLine($"\n✓ Loan approved!");
-            Console.WriteLine($"Amount: {amount} {currency}");
-            Console.WriteLine($"Total loan + interest: {totalRepayment} {currency}");
-            Console.WriteLine($"Months: {months}");
-            Console.WriteLine($"Total repayment: {totalRepayment} {currency}");
+            Console.WriteLine("\nLoan summary:");
+            Console.WriteLine($"Loan amount (principal): {amount:N2} SEK");
+            Console.WriteLine($"Interest rate: {interestRate}% for {months} months");
+            Console.WriteLine($"Interest to pay: {interestAmount:N2} SEK");
+            Console.WriteLine($"Total repayment: {totalRepayment:N2} SEK");
 
             Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
