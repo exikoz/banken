@@ -9,11 +9,12 @@ namespace bank.Core
         private readonly AuthenticationService authService;
         private readonly AccountService accountService;
         private readonly AdminService adminService;
-        private User? currentUser;
         private readonly TransactionService transactionService;
         private readonly InterestService interestService;
         private readonly LoanService loanService;
         private readonly TransferService transferService;
+
+        private User? currentUser;
         private bool hasShownSplash = false;
 
         public Menu()
@@ -33,13 +34,6 @@ namespace bank.Core
         public void DrawUI()
         {
             Console.Title = "Malmö Royal Bank";
-
-            // Show splash screen only once at startup
-            //if (!hasShownSplash)
-            //{
-            //    AsciiArt.DisplaySplashScreen();
-            //    hasShownSplash = true;
-            //}
 
             while (true)
             {
@@ -92,13 +86,9 @@ namespace bank.Core
             Console.WriteLine($"Logged in as: {currentUser!.Name} ({currentUser.Id}) [{currentUser.Role}]\n");
 
             if (currentUser.IsAdmin())
-            {
                 ShowAdminMenu();
-            }
             else
-            {
                 ShowCustomerMenu();
-            }
         }
 
         private void ShowCustomerMenu()
@@ -210,7 +200,7 @@ namespace bank.Core
                     transferService.DoTransferOwn(currentUser!);
                     break;
                 case "2":
-                    transferService.DoTransferToOther(currentUser!);
+                    transferService.TransferToOther(currentUser!); // works once overload added
                     break;
                 case "3":
                     return;
