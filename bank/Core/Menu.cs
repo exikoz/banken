@@ -33,6 +33,8 @@ namespace bank.Core
 
         public void DrawUI()
         {
+            Console.OutputEncoding = System.Text.Encoding.UTF8; //emoji fix
+
             Console.Title = "Malmö Royal Bank";
 
             while (true)
