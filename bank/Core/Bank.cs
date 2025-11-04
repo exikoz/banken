@@ -28,8 +28,10 @@ namespace bank.Core
             if (!Users.Any(u => u.Id == user.Id))
                 Users.Add(user);
 
-            string numericId = user.Id.Replace("U", "").Trim();
-            string accountNumber = $"{numericId}-{user.Accounts.Count + 1:D2}";
+            // build account number as <userIndex>-<perUserIndex> -> 01-01, 01-02, 02-01
+            int userIndex = Users.FindIndex(u => u.Id == user.Id) + 1;          // 01, 02, 03...
+            int perUserIndex = user.Accounts.Count + 1;                          // 01, 02, ...
+            string accountNumber = $"{userIndex:D2}-{perUserIndex:D2}";
 
             // Hämta valutorna dynamiskt från exchangeRates.json
             var exchangerateService = new bank.Services.ExchangerateService();
