@@ -59,21 +59,22 @@ namespace bank.Services
             ConsoleHelper.WriteHeader("REGISTER NEW USER");
 
             var userId = GetUserId();
-            if (userId == null) return false;
+            if (userId == "<ESC>" || userId == null) return false;
 
             var name = GetName();
-            if (name == null) return false;
+            if (name == "<ESC>" || name == null) return false;
 
             var pin = GetAndConfirmPIN();
-            if (pin == null) return false;
+            if (pin == "<ESC>" || pin == null) return false;
 
-            var newUser = new User(userId, name, pin);
+            var newUser = new User(userId, name, pin, UserRole.Customer);
             bank.RegisterUser(newUser);
 
             ConsoleHelper.WriteSuccess("User registered");
             ConsoleHelper.PauseWithMessage("You can now log in");
             return true;
         }
+
 
         // Validates PIN with retries
         private User? ValidatePINWithRetries(User user)
@@ -111,7 +112,7 @@ namespace bank.Services
         {
             var userId = ConsoleHelper.PromptWithEscape("Enter User SSN (e.g. YYYYMMDD-XXXX)");
 
-            if (userId == "<ESC>") return null;
+            if (userId == "<ESC>") return "<ESC>";
 
             if (string.IsNullOrWhiteSpace(userId))
             {
@@ -137,12 +138,13 @@ namespace bank.Services
             return userId;
         }
 
+
         // Gets name
         private string? GetName()
         {
             var name = ConsoleHelper.PromptWithEscape("Enter your name");
 
-            if (name == "<ESC>") return null;
+            if (name == "<ESC>") return "<ESC>";
 
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -154,12 +156,13 @@ namespace bank.Services
             return name;
         }
 
+
         // Gets PIN and confirms it
         private string? GetAndConfirmPIN()
         {
             var pin = ConsoleHelper.PromptWithEscape("Create PIN (4 digits)");
 
-            if (pin == "<ESC>") return null;
+            if (pin == "<ESC>") return "<ESC>";
 
             if (pin.Length != 4 || !pin.All(char.IsDigit))
             {
@@ -170,7 +173,7 @@ namespace bank.Services
 
             var confirmPin = ConsoleHelper.PromptWithEscape("Confirm PIN");
 
-            if (confirmPin == "<ESC>") return null;
+            if (confirmPin == "<ESC>") return "<ESC>";
 
             if (pin != confirmPin)
             {
