@@ -1,9 +1,6 @@
 ﻿using bank.Attributes;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace bank.Core
 {
@@ -11,7 +8,6 @@ namespace bank.Core
     {
         private int freeWithdrawals = 3;
         private decimal fee = 15;
-        private List<Transaction> transactions = new List<Transaction>();
         private static int transactionCounter = 0;
 
         public SavingsAccount(string accountNumber, User owner, string accountType, string currency)
@@ -23,35 +19,38 @@ namespace bank.Core
             return $"TX-{AccountNumber}-{transactionCounter:D4}";
         }
 
-
-        [ValidateInput(Min ="10", Max = "1000")]
+        [ValidateInput(Min = "10", Max = "1000")]
         public override void Deposit(decimal amount)
         {
             base.Deposit(amount);
 
-            var tx = new Transaction(GenerateTransactionId(), AccountNumber, DateTime.Now, "Deposit", amount);
-            transactions.Add(tx);
+            // Create and add transaction to shared list in base class
+            var tx = new Transaction(GenerateTransactionId(), AccountNumber, DateTime.Now, "Deposit", amount)
+            {
+                Currency = this.Currency,
+                FromUser = "Internal",
+                ToUser = "Internal",
+                FromAccount = AccountNumber,
+                ToAccount = AccountNumber
+            };
+            Transactions.Add(tx); // Use the base class Transactions list
 
             Console.WriteLine($"Deposited {amount} {Currency}. Balance: {Balance} {Currency}");
         }
-
-
-
-
 
         public override void Withdraw(decimal amount)
         {
             decimal total = amount;
             bool feeApplied = false;
 
-            // Kontrollera om avgift ska användas
+            // Check if fee applies
             if (freeWithdrawals <= 0)
             {
                 total += fee;
                 feeApplied = true;
             }
 
-            // Kontrollera saldo innan något dras
+            // Check balance before withdrawal
             if (total > Balance)
             {
                 if (feeApplied)
@@ -61,30 +60,36 @@ namespace bank.Core
                 return;
             }
 
-            // Genomför uttaget
+            // Perform withdrawal
             base.Withdraw(total);
 
-            // Minska fria uttag först EFTER lyckat uttag
             if (freeWithdrawals > 0)
                 freeWithdrawals--;
 
             if (feeApplied)
                 Console.WriteLine($"Withdrawal fee of {fee} {Currency} applied.");
 
-            // Logga transaktion
-            var tx = new Transaction(GenerateTransactionId(), AccountNumber, DateTime.Now, "Withdraw", amount);
-            transactions.Add(tx);
+            // Log the transaction
+            var tx = new Transaction(GenerateTransactionId(), AccountNumber, DateTime.Now, "Withdraw", amount)
+            {
+                Currency = this.Currency,
+                FromUser = "Internal",
+                ToUser = "Internal",
+                FromAccount = AccountNumber,
+                ToAccount = AccountNumber
+            };
+            Transactions.Add(tx); // Use base list
 
             Console.WriteLine($"Withdrew {amount} {Currency}. Balance: {Balance} {Currency}");
 
-            // Visa återstående fria uttag
+            // Show free withdrawals info
             if (freeWithdrawals > 0)
                 Console.WriteLine($"You have {freeWithdrawals} free withdrawal(s) left.");
             else
                 Console.WriteLine("No free withdrawals remaining — next withdrawal will include a fee.");
         }
 
-        // Dynamisk ränteberäkning med stigande ränta efter 12 månader
+        // Dynamic interest calculation (higher rate after 12 months)
         public decimal CalculateFutureBalance(decimal annualInterestRate, int months)
         {
             if (annualInterestRate < 0 || months < 0)
@@ -93,7 +98,6 @@ namespace bank.Core
                 return Balance;
             }
 
-            // Grundränta hämtas från bankens standard
             decimal baseRate = annualInterestRate;
             decimal monthlyRateIncrease = 0.1m;
 
@@ -111,9 +115,7 @@ namespace bank.Core
             Console.WriteLine($"Interest earned: {interest:N2} {Currency}");
             Console.WriteLine($"Future balance: {futureBalance:N2} {Currency}\n");
 
-
             return futureBalance;
         }
-
     }
 }

@@ -33,24 +33,29 @@ namespace bank.Services
                 return;
             }
 
-            Console.WriteLine($"{"Date and Time",-22} | {"Type",-10} | {"Amount",-15} | {"Currency",-8} | {"Account",-10} | {"Account Type",-12}");
-            Console.WriteLine(new string('-', 90));
+            Console.WriteLine($"{"Date",-22} | {"Type",-10} | {"Amount",-12} | {"Currency",-8} | {"From",-25} | {"To",-25}");
+            Console.WriteLine(new string('-', 110));
 
             foreach (var item in allTransactions)
             {
-                var a = item.Account;
                 var t = item.Transaction;
 
-                string accountType = a is SavingsAccount ? "Savings" :
-                                     a is CheckingAccount ? "Checking" : "Other";
+                // Om FromUser inte är satt, visa "Internal"
+                string fromDisplay = !string.IsNullOrWhiteSpace(t.FromUser)
+                    ? $"{t.FromUser} ({t.FromAccount})"
+                    : "Internal";
 
-                Console.WriteLine($"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} | {t.Type,-10} | {t.Amount,-15:F2} | {a.Currency,-8} | {a.AccountNumber,-10} | {accountType,-12}");
+                // Om ToUser inte är satt, visa "Internal"
+                string toDisplay = !string.IsNullOrWhiteSpace(t.ToUser)
+                    ? $"{t.ToUser} ({t.ToAccount})"
+                    : "Internal";
+
+                Console.WriteLine($"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} | {t.Type,-10} | {t.Amount,-12:F2} | {t.Currency,-8} | {fromDisplay,-25} | {toDisplay,-25}");
             }
 
-            Console.WriteLine(new string('-', 90));
+            Console.WriteLine(new string('-', 110));
             Console.WriteLine("\nPress any key to return to menu...");
             Console.ReadKey();
         }
-
     }
 }

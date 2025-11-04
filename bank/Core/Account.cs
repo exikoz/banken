@@ -1,57 +1,54 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace bank.Core
 {
+    /// <summary>
+    /// Represents a basic bank account. Can be inherited by CheckingAccount, SavingsAccount, etc.
+    /// </summary>
     public class Account
     {
         public string AccountNumber { get; set; }
-        public decimal Balance { get; protected set; }
+        public decimal Balance { get; internal set; }  // internal set allows modification inside project
         public User Owner { get; set; }
         public string AccountType { get; protected set; }
         public string Currency { get; set; }
 
-        // Lista för att lagra transaktioner
+        // List of all transactions linked to this account
         public List<Transaction> Transactions { get; } = new();
 
         public Account(string accountNumber, User owner, string accountType = "Generic", string currency = "SEK")
         {
-            AccountNumber = accountNumber;
-            Owner = owner;
-            Balance = 0;
+            AccountNumber = accountNumber ?? throw new ArgumentNullException(nameof(accountNumber));
+            Owner = owner ?? throw new ArgumentNullException(nameof(owner));
             AccountType = accountType;
             Currency = currency;
+            Balance = 0;
         }
 
+        /// <summary>
+        /// Deposit money into the account.
+        /// </summary>
         public virtual void Deposit(decimal amount)
         {
             if (amount <= 0)
             {
-                Console.WriteLine("\nDeposit failed: The amount must be greater than 0.");
+                Console.WriteLine("\nDeposit failed: amount must be greater than 0.");
                 return;
             }
 
             Balance += amount;
-
-            Transactions.Add(new Transaction(
-                id: Guid.NewGuid().ToString("N"),
-                accountNumber: AccountNumber,
-                timeStamp: DateTime.UtcNow,
-                type: "Deposit",
-                amount: amount
-            ));
-
-            Console.WriteLine($"\nDeposit succeeded: {amount} {Currency}. New Balance = {Balance} {Currency}.");
+            Console.WriteLine($"\nDeposited {amount:N2} {Currency}. New balance: {Balance:N2} {Currency}.");
         }
 
+        /// <summary>
+        /// Withdraw money from the account if funds are available.
+        /// </summary>
         public virtual void Withdraw(decimal amount)
         {
             if (amount <= 0)
             {
-                Console.WriteLine("\nWithdraw failed: The amount must be greater than 0.");
+                Console.WriteLine("\nWithdraw failed: amount must be greater than 0.");
                 return;
             }
 
@@ -62,17 +59,7 @@ namespace bank.Core
             }
 
             Balance -= amount;
-
-            Transactions.Add(new Transaction(
-                id: Guid.NewGuid().ToString("N"),
-                accountNumber: AccountNumber,
-                timeStamp: DateTime.UtcNow,
-                type: "Withdraw",
-                amount: amount
-            ));
-
+            Console.WriteLine($"\nWithdrawn {amount:N2} {Currency}. New balance: {Balance:N2} {Currency}.");
         }
-
     }
 }
-

@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace bank.Core
 {
@@ -14,7 +10,6 @@ namespace bank.Core
 
         public CheckingAccount(string accountNumber, User owner, string accountType, string currency, decimal overdraftLimit = 1000m)
             : base(accountNumber, owner, accountType, currency)
-
         {
             if (string.IsNullOrWhiteSpace(accountNumber))
                 throw new ArgumentException("Account number is required.", nameof(accountNumber));
@@ -52,19 +47,57 @@ namespace bank.Core
                 return;
             }
 
+            // Apply withdrawal
             Balance = projected;
 
-            Transactions.Add(new Transaction(
+            // Log transaction in shared transaction list
+            var tx = new Transaction(
                 id: Guid.NewGuid().ToString("N"),
                 accountNumber: AccountNumber,
                 timeStamp: DateTime.UtcNow,
                 type: "Withdraw",
                 amount: amount
-            ));
+            )
+            {
+                Currency = this.Currency,
+                FromUser = "Internal",
+                ToUser = "Internal",
+                FromAccount = AccountNumber,
+                ToAccount = AccountNumber
+            };
+            Transactions.Add(tx);
 
             Console.WriteLine($"\nWithdraw succeeded: {amount} {Currency}. New balance = {Balance} {Currency}.");
         }
 
+        public override void Deposit(decimal amount)
+        {
+            if (amount <= 0)
+            {
+                Console.WriteLine("\nDeposit failed: amount must be greater than 0.");
+                return;
+            }
 
+            Balance += amount;
+
+            // Log transaction in shared transaction list
+            var tx = new Transaction(
+                id: Guid.NewGuid().ToString("N"),
+                accountNumber: AccountNumber,
+                timeStamp: DateTime.UtcNow,
+                type: "Deposit",
+                amount: amount
+            )
+            {
+                Currency = this.Currency,
+                FromUser = "Internal",
+                ToUser = "Internal",
+                FromAccount = AccountNumber,
+                ToAccount = AccountNumber
+            };
+            Transactions.Add(tx);
+
+            Console.WriteLine($"\nDeposit succeeded: {amount} {Currency}. New balance = {Balance} {Currency}.");
+        }
     }
 }
