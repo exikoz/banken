@@ -45,7 +45,7 @@ namespace bank.Services
             Console.Clear();
             ConsoleHelper.WriteHeader("TRANSFER BETWEEN OWN ACCOUNTS");
 
-            // User must have at least 2 accounts total
+            // Must have at least two accounts total
             if (currentUser.Accounts.Count < 2)
             {
                 ConsoleHelper.WriteWarning("You need at least two accounts to transfer between them.");
@@ -53,35 +53,38 @@ namespace bank.Services
                 return;
             }
 
-            // User must have at least 1 account with balance
-            var accountsWithBalance = currentUser.Accounts.Where(a => a.Balance > 0).ToList();
+            // Get accounts with balance > 0
+            var sourceAccounts = currentUser.Accounts
+                .Where(a => a.Balance > 0)
+                .ToList();
 
-            if (accountsWithBalance.Count < 1)
+            // Must have at least ONE account with balance
+            if (sourceAccounts.Count == 0)
             {
                 ConsoleHelper.WriteWarning("No accounts have available balance.");
                 ConsoleHelper.PauseWithMessage();
                 return;
             }
 
-            // And user must have at least one *other* account to transfer TO
-            if (accountsWithBalance.Count == 1 && currentUser.Accounts.Count == 2)
+            // If only 1 account has balance, ensure destination options exist
+            if (sourceAccounts.Count == 1)
             {
-                ConsoleHelper.WriteWarning("You only have one account with balance. No valid destination account.");
-                ConsoleHelper.PauseWithMessage();
-                return;
+                var onlySource = sourceAccounts[0];
+
+                // Find all possible destination accounts
+                var possibleDestinations = currentUser.Accounts
+                    .Where(a => a != onlySource)
+                    .ToList();
+
+                if (!possibleDestinations.Any())
+                {
+                    ConsoleHelper.WriteWarning("You only have one usable account. No valid destination.");
+                    ConsoleHelper.PauseWithMessage();
+                    return;
+                }
             }
 
-            var sourceAccounts = currentUser.Accounts
-                .Where(a => a.Balance > 0)
-                .ToList();
-
-            if (!sourceAccounts.Any())
-            {
-                ConsoleHelper.WriteWarning("No accounts with balance available.");
-                ConsoleHelper.PauseWithMessage();
-                return;
-            }
-
+            // ----- SELECT SOURCE ACCOUNT -----
             Console.WriteLine("Select source account:\n");
             for (int i = 0; i < sourceAccounts.Count; i++)
                 Console.WriteLine($"{i + 1}. {sourceAccounts[i].AccountNumber} | {sourceAccounts[i].Balance:N2} {sourceAccounts[i].Currency}");
@@ -93,10 +96,19 @@ namespace bank.Services
 
             var fromAcc = sourceAccounts[srcChoice - 1];
 
+            // Destination accounts must be ALL OTHER accounts
             var destList = currentUser.Accounts
                 .Where(a => a != fromAcc)
                 .ToList();
 
+            if (!destList.Any())
+            {
+                ConsoleHelper.WriteWarning("No valid destination account.");
+                ConsoleHelper.PauseWithMessage();
+                return;
+            }
+
+            // ----- SELECT DESTINATION ACCOUNT -----
             Console.WriteLine("\nSelect destination account:\n");
             for (int i = 0; i < destList.Count; i++)
                 Console.WriteLine($"{i + 1}. {destList[i].AccountNumber} | {destList[i].Balance:N2} {destList[i].Currency}");
@@ -108,6 +120,7 @@ namespace bank.Services
 
             var toAcc = destList[dstChoice - 1];
 
+            // ----- AMOUNT -----
             Console.Clear();
             ConsoleHelper.WriteHeader("ENTER AMOUNT");
 
@@ -139,11 +152,11 @@ namespace bank.Services
                 return;
             }
 
+            // PIN CHECK
             Console.Clear();
             ConsoleHelper.WriteHeader("ENTER PIN TO CONFIRM TRANSFER");
             if (!ValidatePin(currentUser)) return;
 
-            // Withdraw check
             if (!ApplyWithdrawal(fromAcc, amount, out decimal fee, out string _))
             {
                 ConsoleHelper.WriteError("Insufficient coverage.");
@@ -151,7 +164,7 @@ namespace bank.Services
                 return;
             }
 
-            // Create PENDING TRANSFER (same mechanism as external)
+            // Create pending transfer
             string txId = Bank.GenerateTransactionId();
             DateTime releaseTime = DateTime.UtcNow.AddMinutes(3);
 
@@ -183,22 +196,19 @@ namespace bank.Services
                 TargetCurrency = toAcc.Currency
             };
 
-            // Attach SAME transaction object to both accounts
             fromAcc.Transactions.Add(pendingTx);
             toAcc.Transactions.Add(pendingTx);
 
-            // Register in bank queue
             bank.PendingTransfers.Add(pendingTx);
 
             Console.Clear();
             ConsoleHelper.WriteHeader("TRANSFER INITIATED");
-
             ConsoleHelper.WriteSuccess($"Transfer is now pending (3 minutes).");
             ConsoleHelper.WriteSuccess($"Transaction ID: {txId}");
             ConsoleHelper.WriteInfo($"From: {fromAcc.AccountNumber}");
             ConsoleHelper.WriteInfo($"To: {toAcc.AccountNumber}");
             ConsoleHelper.WriteInfo($"Amount: {amount:N2} {fromAcc.Currency}");
-         
+
             ConsoleHelper.PauseWithMessage();
         }
 
