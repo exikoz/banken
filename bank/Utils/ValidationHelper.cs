@@ -11,6 +11,8 @@ namespace bank.Utils
     public static class ValidationHelper
     {
 
+
+
         public static bool IsValid<T>(T data)
 
         {
@@ -26,8 +28,8 @@ namespace bank.Utils
             if (data is long l) return MinMax(0L, long.MaxValue, l);
             if (data is int i) return MinMax(0, int.MaxValue, i);
             if (data is decimal d) return MinMax(0m, decimal.MaxValue, d);
-            if (data is ICollection c) return  DynamicContainerCheck(c);
             if (data is Array a) return FixedSizeContainerCheck(a);
+            if (data is ICollection c) return  DynamicContainerCheck(c);
             
             return true;
         }
@@ -36,7 +38,7 @@ namespace bank.Utils
 
         public static bool StringCheck(string container)
         {
-            if(string.IsNullOrEmpty(container))
+            if(string.IsNullOrWhiteSpace(container))
             {
                 ConsoleHelper.WriteWarning($"Input cannot be empty!");
                 return false;
@@ -68,18 +70,55 @@ namespace bank.Utils
 
         public static bool MinMax<T>(T min, T max,T value) where T : IComparable<T> // IComparable checks that the values can be compared during compil time
         {
-            if(value.CompareTo(min) <0 )
+            if(value.CompareTo(min) <= 0 )
             {
                 ConsoleHelper.WriteWarning($"Value cannot be lower than {min}");
                 return false;
             }
-            if (value.CompareTo(max) > 0)
+            if (value.CompareTo(max) >= 0)
             {
                 ConsoleHelper.WriteWarning($"Value cannot be higher than {max}");
                 return false;
             }
 
             return true;
+        }
+
+
+        public static void TestSelf()
+        {
+            TestingInput(input =>
+            {
+                bool result = IsValid(input);
+                Console.WriteLine($"Result is: {result}");
+
+            }
+            );
+        }
+
+        public static void TestingInput(Action<object> action)
+        {
+            var IlegalInput = new List<object>
+            {
+                null,
+                "",
+                " ",
+                -1,
+                0,
+                int.MaxValue,
+                long.MaxValue,
+                0L,
+                decimal.MaxValue,
+                new int[0],
+                new List<string>(),
+              };
+
+
+
+            foreach (var input in IlegalInput)
+            {
+                action.Invoke(input);
+            }
         }
     }
 }
