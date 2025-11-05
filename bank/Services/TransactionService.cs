@@ -27,7 +27,7 @@ namespace bank.Services
             // Run pending processing before showing
             bank.ProcessPendingTransfers();
 
-            // Get all transactions for all accounts owned by the user
+            // Fetches all user transactions 
             var allTransactions = currentUser.Accounts
                 .SelectMany(a => a.Transactions
                     .Select(t => new { Account = a, Transaction = t }))
@@ -42,15 +42,23 @@ namespace bank.Services
                 .OrderByDescending(x => x.Transaction.TimeStamp)
                 .ToList();
 
+
+            /* Afterwards I divide the list into smaller lists holding the filtered content. 
+             */
             var processingTransactions = allTransactions.Where(x => !x.Transaction.IsProcessed).ToList();
             var completedTransactions = allTransactions.Where(x => x.Transaction.IsProcessed).ToList();
             var deposits = allTransactions.Where(x => x.Transaction.Type == "Deposit");
             var withdrawals = allTransactions.Where(x => x.Transaction.Type == "Withdraw");
 
 
-
+            //Then I use this dynamic array to hold the lists. It holds all transactions by default
             IEnumerable<dynamic> TransactionToShow = allTransactions;
 
+
+            /* I place all the transactions with their Title in one list, 
+               This represents the possible navigations available. 
+               We also need this for our "arrow" logic. 
+            */
             var filters = new List<(string Name, IEnumerable<dynamic> Data)>
             {
                 ("All", allTransactions),
@@ -77,7 +85,7 @@ namespace bank.Services
 
 
 
-
+            // represents the position in console, default first object in filters when init
             int x = 1;
 
             ConsoleKeyInfo key;
@@ -93,19 +101,45 @@ namespace bank.Services
                 Console.WriteLine($"Currently viewing: {filters[x].Name}");
 
 
+                // The actual iteration and printing of the table, this is reprinted when list view is changed
+
                 foreach (var item in filters[x].Data)
                 {
                     var t = item.Transaction;
 
-                // From formatting
-                string fromDisplay =
-                    t.FromAccount == "0000" ? "ATM" :
-                    $"{t.FromUser} ({t.FromAccount})";
+                    // If FromUser isn't defiened , show "Internal"
+                    string fromDisplay = !string.IsNullOrWhiteSpace(t.FromUser)
+                        ? $"{t.FromUser} ({t.FromAccount})"
+                        : "Internal";
 
-                // To formatting
-                string toDisplay =
-                    t.ToAccount == "0000" ? "ATM" :
-                    $"{t.ToUser} ({t.ToAccount})";
+                    // If FromUser isn't defiened , show "Internal"
+                    string toDisplay = !string.IsNullOrWhiteSpace(t.ToUser)
+                        ? $"{t.ToUser} ({t.ToAccount})"
+                        : "Internal";
+
+                    if (!t.IsProcessed)
+                    {
+                        ConsoleHelper.WriteHighlight(
+                            $"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} | {t.Type,-10} | {t.Amount,-12:F2} | {t.Currency,-8} | " +
+                            $"{fromDisplay,-25} | {toDisplay,-25} | Processing: {t.ProcessDuration}"
+                        );
+                        Console.WriteLine();
+                    }
+                    else
+                    {
+                        ConsoleHelper.WriteSuccess($"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} \n | {t.Type,-10} | {t.Amount,-12:F2} | {t.Currency,-8} | {fromDisplay,-25} | {toDisplay,-25} | Completed: {t.ProcessDuration}");
+                    }
+
+                }
+                Console.WriteLine(new string('-', 120));
+
+
+                /* here we read key input, and either go left(-) or right(+) 
+                // I use modolus to stay within bounds. Our list is at this moment
+                // at 5 indices (0,1,2,3,4), so if we try and head over to 5 then: 
+                // (4+1) % 5 = 0
+                */
+
 
                 // Status formatting
                 string status;

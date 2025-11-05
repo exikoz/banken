@@ -70,10 +70,10 @@ namespace bank.Services
                     case "1": SearchAccountMenu(); break;
                     case "2": ViewAllUsers(); break;
                     case "3": CreateNewUserUI(); break;
-                    case "4": UnlockUserBlocks(); break;
+                    case "4": UnblockUsers(); break;
                     case "5": ViewAllAccounts(); break;
                     case "6": ViewAllRates(); break;
-                    case "7": AddExchangeRate(); break;
+                    case "7": EditExchangeRate(); break;
                     case "8": UpdateSavingsInterestRate(); break;
                     case "9": UpdateLoanInterestRate(); break;
                     case "10": return;
@@ -117,7 +117,7 @@ namespace bank.Services
         }
 
         // Unblocks users
-        public void UnlockUserBlocks()
+        public void UnblockUsers()
         {
             while (true)
             {
@@ -285,7 +285,11 @@ namespace bank.Services
         }
 
         // Adds or updates a rate
-        private void AddExchangeRate()
+
+
+
+
+        private void EditExchangeRate()
         {
             ConsoleHelper.ClearScreen();
             ConsoleHelper.WriteHeader("UPDATE/DELETE/CREATE EXCHANGE RATES");
@@ -295,7 +299,7 @@ namespace bank.Services
             foreach (var r in rates)
                 Console.WriteLine($"{(r.CustomCode ?? r.Code.ToString())} -> {r.Rate}");
 
-            var selected = ReadInput("Enter currency code or type (N) to add a new one");
+            var selected = ReadInput("Enter currency code or type (N) to add a new one").ToUpper();
             if (IsBack(selected)) return;
 
             if (selected.Equals("N", StringComparison.OrdinalIgnoreCase))
@@ -303,13 +307,18 @@ namespace bank.Services
                 AddNewCurrency();
                 return;
             }
-
+            if(selected.Equals("SEK") || selected.Equals("0"))
+            {
+                ConsoleHelper.WriteWarning("Cannot edit base currency");
+                return; // refactor if given time so this is shown in ViewRates, so if input is faulty and we go "return" , it rolls back to the ViewRates menu instead of full menu.
+                
+            }
 
             if (!Enum.TryParse(selected, true, out CurrencyCode code))
             {
                 ConsoleHelper.WriteWarning("Invalid currency.");
                 ConsoleHelper.PauseWithMessage();
-                return;
+
             }
 
             Console.WriteLine($"You chose: {selected}");

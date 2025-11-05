@@ -113,33 +113,34 @@ namespace bank.Utils
 
 
 
-
-
-        public void DeleteByPredicate<T>(Func<T, bool> predicate, string filePath) where T : class
+        public void RemoveJsonByField<T>(Func<T, bool> field, string filePath)
         {
+
+
             if (!File.Exists(filePath))
             {
                 ConsoleHelper.WriteWarning("File not found, nothing to remove.");
+
                 return;
             }
 
 
-            List<T> dataSet = JsonHelper.DeserializeJson<T>(filePath);
-
-            if (dataSet == null || !dataSet.Any())
+            var dataSet = DeserializeJson<T>(filePath);
+            if (dataSet == null || dataSet.Count == 0)
             {
-                ConsoleHelper.WriteWarning("No data found in file.");
+                ConsoleHelper.WriteWarning("No data found.");
                 return;
             }
-            var itemToRemove = dataSet.SingleOrDefault(predicate);
 
-            if (itemToRemove == null)
+
+            var exists = dataSet.FirstOrDefault(field);
+            if (exists == null)
             {
-                ConsoleHelper.WriteWarning("Currency not found in the file.");
+                ConsoleHelper.WriteWarning("No data to remove. ");
                 return;
             }
 
-            dataSet.Remove(itemToRemove);
+            dataSet.Remove(exists);
             //File.Copy(filePath, filePath + ".bak", overwrite: true);
 
             string output = JsonSerializer.Serialize(dataSet, new JsonSerializerOptions { WriteIndented = true });
@@ -147,7 +148,7 @@ namespace bank.Utils
 
             ConsoleHelper.WriteSuccess("Data successfully removed!");
         }
-        
+
 
 
 
@@ -155,11 +156,12 @@ namespace bank.Utils
 
         public void UpdateJson<T>(Func<T, bool> fieldToUpdate, T newData, string filePath)
         {
-            if (!ValidationHelper.IsValid(newData)) 
-                return;
 
-            if (!ValidationHelper.IsValid(filePath))
+            if (fieldToUpdate == null)
+            {
+                ConsoleHelper.WriteWarning("Field to update required.");
                 return;
+            };
 
             if (!File.Exists(filePath))
             { 
@@ -168,6 +170,7 @@ namespace bank.Utils
             }
 
             var dataSet = DeserializeJson<T>(filePath);
+
 
 
 
