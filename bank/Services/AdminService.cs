@@ -98,7 +98,7 @@ namespace bank.Services
             var name = ReadInput("Enter name");
             if (IsBack(name)) return;
 
-            var pin = ReadInput("Enter PIN");
+            var pin = ConsoleHelper.PromptWithEscapeMasked("Enter PIN");
             if (IsBack(pin)) return;
 
             var user = new User(id, name, pin, UserRole.Customer);

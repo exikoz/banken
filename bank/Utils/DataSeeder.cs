@@ -25,6 +25,10 @@ namespace bank.Utils
             var acc1 = bank.OpenAccount(user1, "01-01", "checking");
             var acc2 = bank.OpenAccount(user1, "01-02", "savings");
 
+            // Create only Maria's two accounts
+            var acc3 = bank.OpenAccount(user1, "02-01", "checking");
+            var acc4 = bank.OpenAccount(user1, "02-02", "savings");
+
             SeedTransactions(acc1, acc2);
 
             ConsoleHelper.WriteSuccess("Test data seeded");
