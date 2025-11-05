@@ -1,10 +1,9 @@
-﻿using System;
+using System;
 
 namespace bank.Core
 {
     public class CheckingAccount : Account
     {
-        // Overdraft removed (not in backlog)
         private static int transactionCounter = 0;
 
         public CheckingAccount(string accountNumber, User owner, string accountType, string currency)
@@ -42,7 +41,6 @@ namespace bank.Core
             if (amount <= 0)
                 return;
 
-            // No overdraft allowed
             if (Balance < amount)
                 return;
 

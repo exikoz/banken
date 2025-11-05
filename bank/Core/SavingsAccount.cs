@@ -1,4 +1,4 @@
-﻿using bank.Attributes;
+using bank.Attributes;
 using System;
 
 namespace bank.Core
@@ -9,7 +9,6 @@ namespace bank.Core
         private decimal fee = 15;
         private static int transactionCounter = 0;
 
-        // Public getters so other services can read summary info
         public int FreeWithdrawalsLeft => freeWithdrawals;
         public decimal WithdrawFee => fee;
 
@@ -41,13 +40,9 @@ namespace bank.Core
         public override void Withdraw(decimal amount)
         {
             decimal total = amount;
-            bool feeApplied = false;
 
             if (freeWithdrawals <= 0)
-            {
                 total += fee;
-                feeApplied = true;
-            }
 
             if (total > Balance)
                 return;
