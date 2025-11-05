@@ -36,11 +36,16 @@ namespace bank.Utils
 
 
 
-        public static bool StringCheck(string container)
+        public static bool StringCheck(string input)
         {
-            if(string.IsNullOrWhiteSpace(container))
+            if(string.IsNullOrWhiteSpace(input))
             {
                 ConsoleHelper.WriteWarning($"Input cannot be empty!");
+                return false;
+            }
+            if (input.Length > 20)
+            {
+                ConsoleHelper.WriteWarning($"Too many characters! Max amount of character allowed is 20");
                 return false;
             }
             return true;

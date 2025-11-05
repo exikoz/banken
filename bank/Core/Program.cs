@@ -13,11 +13,9 @@ namespace bank.Core
     {
         static void Main(string[] args)
         {
-            //var menu = new Menu();
-            //menu.DrawUI();
-            //menu.BankApp();
+            var menu = new Menu();
+            menu.DrawUI();
 
-            ValidationHelper.TestSelf();
          
             }
 

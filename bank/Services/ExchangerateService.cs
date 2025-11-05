@@ -52,12 +52,13 @@ namespace bank.Services
 
         public void CreateFile(ExchangeRate rates)
         {
+            ValidationHelper.IsValid(rates);
             jsonHelper.WriteJson(rates, filePath);
         }
 
         public void AddRates(ExchangeRate rate) 
         { 
-            if (rate == null) Console.WriteLine("Rate cannot be null.");
+            ValidationHelper.IsValid(rate);
             jsonHelper.UpdateJson(c => c.Code == rate.Code, rate, filePath);
         }
 
@@ -78,7 +79,7 @@ namespace bank.Services
                 };
             var json = System.Text.Json.JsonSerializer.Serialize(defaultRates, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(filePath, json);
-            Console.WriteLine($"Created exchangeRates.json at {filePath}");
+            ConsoleHelper.WriteInfo($"Initialization: Created exchangeRates.json at {filePath}");
 
         }
 

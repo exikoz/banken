@@ -1,4 +1,5 @@
-﻿using System;
+﻿using bank.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -30,10 +31,9 @@ namespace bank.Core
         public List<Account> Accounts { get; } = new();
         public User(string id, string name, string pin, UserRole role = UserRole.Customer)
         {
-            if (string.IsNullOrWhiteSpace(id))
-                Console.WriteLine(nameof(id), " missing or couldn't be fetched");
-            if (string.IsNullOrWhiteSpace(name))
-                Console.WriteLine(nameof(name), " missing or couldn't be fetched");
+            ValidationHelper.IsValid(id);
+            ValidationHelper.IsValid(name);
+            ValidationHelper.IsValid(pin);
             Id = id;
             Name = name;
             PIN = pin;

@@ -19,7 +19,7 @@ namespace bank.Services
         {
             if (!admin.IsAdmin())
             {
-                Console.WriteLine("Access Denied: Admin privileges required.");
+                ConsoleHelper.WriteWarning("Access Denied: Admin privileges required.");
                 TableFormatter.PauseForUser();
                 return;
             }
@@ -73,7 +73,7 @@ namespace bank.Services
                         exit = true;
                         break;
                     default:
-                        Console.WriteLine("\n Invalid choice.");
+                        ConsoleHelper.WriteWarning("\n Invalid choice.");
                         TableFormatter.PauseForUser();
                         break;
                 }
@@ -93,7 +93,7 @@ namespace bank.Services
 
             if (blockedUsers.Count == 0)
             {
-                Console.WriteLine("No blocked users found.");
+                ConsoleHelper.WriteWarning("No blocked users found.");
                 TableFormatter.PauseForUser();
                 return;
             }
@@ -103,11 +103,11 @@ namespace bank.Services
                 Console.ForegroundColor = ConsoleColor.Red;
                 foreach (var user in blockedUsers)
                 {
-                    Console.WriteLine($"User: {user.Name} (ID: {user.Id}) is blocked");
+                    ConsoleHelper.WriteSuccess($"User: {user.Name} (ID: {user.Id}) is blocked");
                 }
                 Console.ResetColor();
 
-                Console.WriteLine("Type in user ID to unblock or type 'B' to go back:");
+                ConsoleHelper.WriteInfo("Type in user ID to unblock or type 'B' to go back:");
                 var input = Console.ReadLine();
 
                 if (string.Equals(input, "B", StringComparison.OrdinalIgnoreCase))
@@ -308,7 +308,7 @@ namespace bank.Services
 
         private void SearchByUsername()
         {
-            Console.Write("\nEnter username: ");
+            ConsoleHelper.WriteInfo("\nEnter username: ");
             var username = Console.ReadLine();
 
             if (string.IsNullOrWhiteSpace(username))
