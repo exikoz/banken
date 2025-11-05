@@ -126,7 +126,7 @@ namespace bank.Services
 
                 var blockedUsers = GetBlockedUsers();
 
-                if (blockedUsers.Count == 0)
+                if (!ValidationHelper.IsValid(blockedUsers))
                 {
                     ConsoleHelper.WriteInfo("No blocked users.");
                     ConsoleHelper.PauseWithMessage();
@@ -168,7 +168,7 @@ namespace bank.Services
 
             var users = searchService.GetAllUsers();
 
-            if (!users.Any())
+            if (!ValidationHelper.IsValid(users))
             {
                 ConsoleHelper.WriteWarning("No users found.");
                 ConsoleHelper.PauseWithMessage();

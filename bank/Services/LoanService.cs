@@ -83,7 +83,7 @@ namespace bank.Services
 
             // 3. Fråga sedan om antal månader
             Console.Write("Over how many months would you like to repay the loan: ");
-            if (!int.TryParse(Console.ReadLine(), out var months) || months <= 0)
+            if (!int.TryParse(Console.ReadLine(), out var months) || months <= 0 || months > 300)
             {
                 Console.WriteLine("\nInvalid number of months.");
                 Console.ReadKey();
