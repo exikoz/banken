@@ -70,7 +70,6 @@ namespace bank.Services
                 .Where(a => a != fromAcc)
                 .ToList();
 
-            Console.WriteLine("\nSELECT DESTINATION ACCOUNT\n");
             for (int i = 0; i < destList.Count; i++)
                 Console.WriteLine($"{i + 1}. {destList[i].AccountNumber} | {destList[i].Balance:N2} {destList[i].Currency}");
 

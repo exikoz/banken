@@ -135,6 +135,8 @@ namespace bank.Core
 
         public void ProcessPendingTransfers()
         {
+            var exchange = new bank.Services.ExchangerateService();
+
             foreach (var account in Accounts)
             {
                 var pending = account.Transactions
@@ -147,22 +149,34 @@ namespace bank.Core
                     if (receiver == null)
                         continue;
 
-                    // 1. Add money to receiver balance
-                    receiver.Balance += tx.Amount;
+                    // 1. Convert amount to receiver currency IF needed
+                    decimal convertedAmount = tx.Amount;
 
-                    // 2. Mark original TX (sender’s pending) as completed
+                    if (tx.Currency != receiver.Currency)
+                    {
+                        convertedAmount = exchange.ConvertCurrency(
+                            tx.Amount,
+                            tx.Currency,        // sender currency
+                            receiver.Currency   // receiver currency
+                        );
+                    }
+
+                    // 2. Update receiver balance with converted amount
+                    receiver.Balance += convertedAmount;
+
+                    // 3. Mark sender transaction completed
                     tx.IsPending = false;
                     tx.Status = "Completed";
                     tx.ReleaseAt = null;
 
-                    // 3. Create matching deposit TX for receiver
+                    // 4. Create receiver transaction log
                     var receiveTx = new Transaction(
-                        id: tx.Id,                         // SAME ID
+                        id: tx.Id,                                // same transaction ID
                         accountNumber: receiver.AccountNumber,
                         timeStamp: DateTime.UtcNow,
                         type: "Transfer",
-                        amount: tx.Amount,
-                        currency: receiver.Currency,
+                        amount: convertedAmount,                  // converted amount
+                        currency: receiver.Currency,              // receiver currency
                         accountType: receiver.AccountType,
                         fromAccount: tx.FromAccount,
                         toAccount: tx.ToAccount,
@@ -172,10 +186,9 @@ namespace bank.Core
                     {
                         IsPending = false,
                         Status = "Completed",
-                        IsInternal = false                // External transfer
+                        IsInternal = false
                     };
 
-                    // 4. Add to receiver’s transaction list
                     receiver.Transactions.Add(receiveTx);
                 }
             }
