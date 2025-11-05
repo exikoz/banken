@@ -1,4 +1,5 @@
 ﻿using bank.Core;
+using bank.Utils;
 using System;
 using System.Linq;
 
@@ -13,77 +14,105 @@ namespace bank.Services
             this.bank = bank;
         }
 
+        // Entry point for interest calculation
         public void CalculateInterest(User currentUser)
         {
-            Console.Clear();
-            Console.WriteLine("=== CALCULATE INTEREST ===\n");
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("CALCULATE INTEREST");
 
             if (currentUser == null)
             {
-                Console.WriteLine("You must be logged in to use this feature.\n");
-                Console.ReadKey();
+                ConsoleHelper.WriteError("You must be logged in.");
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
-            // Lista alla sparkkonton för användaren som har saldo >0
+            // List savings accounts with balance > 0
             var savingsAccounts = bank.Accounts
                 .OfType<SavingsAccount>()
                 .Where(a => a.Owner == currentUser && a.Balance > 0)
                 .ToList();
 
-
             if (!savingsAccounts.Any())
             {
-                Console.WriteLine("No savings accounts with positive balance found.\n");
-                Console.ReadKey();
+                ConsoleHelper.WriteWarning("No savings accounts with positive balance found.");
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
-            Console.WriteLine("Select a savings account:");
+            // Display account list
+            ConsoleHelper.WriteInfo("Select a savings account (ESC to go back):");
+
             for (int i = 0; i < savingsAccounts.Count; i++)
             {
                 var acc = savingsAccounts[i];
                 Console.WriteLine($"{i + 1}. {acc.AccountNumber} - {acc.Balance:N2} {acc.Currency}");
             }
 
-            Console.Write("\nChoose account (1–{0}): ", savingsAccounts.Count);
-            if (!int.TryParse(Console.ReadLine(), out int accountChoice) ||
+            // ESC support
+            var input = ConsoleHelper.PromptWithEscape("Choose account");
+
+            if (input == "<ESC>")
+                return;
+
+            if (!int.TryParse(input, out int accountChoice) ||
                 accountChoice < 1 || accountChoice > savingsAccounts.Count)
             {
-                Console.WriteLine("Invalid selection.\n");
-                Console.ReadKey();
+                ConsoleHelper.WriteError("Invalid selection.");
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
             var selectedAccount = savingsAccounts[accountChoice - 1];
 
-            // Använd bankens standardränta
-            decimal bankRate = bank.DefaultSavingsInterestRate;
-            Console.WriteLine("\nEnter period details below:");
+            // Ask for months
+            var monthsInput = ConsoleHelper.PromptWithEscape("Enter number of months");
 
-            // Fråga efter antal månader
-            Console.Write("Enter number of months: ");
-            if (!int.TryParse(Console.ReadLine(), out int months) || months <= 0)
+            if (monthsInput == "<ESC>")
+                return;
+
+            if (!int.TryParse(monthsInput, out int months) || months <= 0)
             {
-                Console.WriteLine("\nInvalid input.\n");
-                Console.ReadKey();
+                ConsoleHelper.WriteError("Invalid number.");
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
-            // Dynamisk ränta: basränta gäller för 1–12 månader, sedan +0.1 % per extra månad
+            // Calculate effective rate
+            decimal bankRate = bank.DefaultSavingsInterestRate;
             decimal effectiveRate = bankRate;
-            decimal monthlyRateIncrease = 0.1m;
 
             if (months > 12)
-                effectiveRate += (months - 12) * monthlyRateIncrease;
+                effectiveRate += (months - 12) * 0.1m;
 
-            // Kör beräkningen med den dynamiska räntan
-            selectedAccount.CalculateFutureBalance(effectiveRate, months);
+            // Calculate future balance
+            decimal futureBalance = CalculateFutureBalance(selectedAccount, effectiveRate, months);
+            decimal interestEarned = futureBalance - selectedAccount.Balance;
+
+            Console.WriteLine();
+            ConsoleHelper.WriteInfo($"Interest rate: {effectiveRate:N2}%");
+            ConsoleHelper.WriteSuccess($"Interest earned: {interestEarned:N2} {selectedAccount.Currency}");
+            ConsoleHelper.WriteSuccess($"Future balance after {months} months: {futureBalance:N2} {selectedAccount.Currency}");
 
 
-            Console.WriteLine("\nPress any key to continue...");
-            Console.ReadKey();
+
+            ConsoleHelper.PauseWithMessage();
         }
 
+        // Pure calculation method
+        public decimal CalculateFutureBalance(Account account, decimal annualInterestRate, int months)
+        {
+            if (annualInterestRate < 0 || months < 0)
+                return account.Balance;
+
+            decimal effectiveRate = annualInterestRate;
+
+            if (months > 12)
+                effectiveRate += (months - 12) * 0.1m;
+
+            decimal interest = Math.Round(account.Balance * (effectiveRate / 100m) * (months / 12m), 2);
+
+            return account.Balance + interest;
+        }
     }
 }

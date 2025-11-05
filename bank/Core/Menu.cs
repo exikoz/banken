@@ -31,10 +31,10 @@ namespace bank.Core
             DataSeeder.SeedTestData(bank);
         }
 
+        // Handles top-level UI loop
         public void DrawUI()
         {
-            Console.OutputEncoding = System.Text.Encoding.UTF8; //emoji fix
-
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
             Console.Title = "Malmö Royal Bank";
 
             while (true)
@@ -47,12 +47,13 @@ namespace bank.Core
                 }
                 else
                 {
-                    Console.Clear();
+                    ConsoleHelper.ClearScreen();
                     ShowMainMenu();
                 }
             }
         }
 
+        // Login options
         private void ShowLoginMenu()
         {
             ConsoleHelper.WriteHeader("WELCOME");
@@ -76,15 +77,16 @@ namespace bank.Core
                     Environment.Exit(0);
                     break;
                 default:
-                    ConsoleHelper.WriteError("Invalid choice. Press any key to try again.");
+                    ConsoleHelper.WriteError("Invalid choice.");
                     Console.ReadKey();
                     break;
             }
         }
 
+        // Routing user to correct menu
         private void ShowMainMenu()
         {
-            Console.WriteLine($"=== MALMÖ ROYAL BANK ===");
+            Console.WriteLine("MALMÖ ROYAL BANK");
             Console.WriteLine($"Logged in as: {currentUser!.Name} ({currentUser.Id}) [{currentUser.Role}]\n");
 
             if (currentUser.IsAdmin())
@@ -93,124 +95,159 @@ namespace bank.Core
                 ShowCustomerMenu();
         }
 
+        // Menu for regular customers
         private void ShowCustomerMenu()
         {
-            Console.WriteLine("1. View My Accounts (Balance)");
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("MAIN MENU");
+
+            Console.WriteLine("1. View My Accounts");
             Console.WriteLine("2. Deposit Money");
             Console.WriteLine("3. Withdraw Money");
             Console.WriteLine("4. Open New Account");
-            Console.WriteLine("5. Calculate Interest");
-            Console.WriteLine("6. Transfer Money");
-            Console.WriteLine("7. View Transaction Log");
-            Console.WriteLine("8. Apply for Loan");
+            Console.WriteLine("5. Transfer Money");
+            Console.WriteLine("6. View Transaction Log");
+            Console.WriteLine("7. Apply for Loan");
+            Console.WriteLine("8. Interest Calculation");
             Console.WriteLine("9. Log Out");
             Console.WriteLine("0. Exit");
-            Console.Write("\nChoose option: ");
 
-            var choice = Console.ReadLine();
+            var choice = ConsoleHelper.PromptWithEscape("Choose option");
+
+            if (choice == "<ESC>")
+                return;
 
             switch (choice)
             {
                 case "1":
                     accountService.ShowAccounts(currentUser!);
                     break;
+
                 case "2":
                     accountService.Deposit(currentUser!);
                     break;
+
                 case "3":
                     accountService.Withdraw(currentUser!);
                     break;
+
                 case "4":
                     accountService.CreateAccount(currentUser!);
                     break;
+
                 case "5":
-                    interestService.CalculateInterest(currentUser!);
-                    break;
-                case "6":
                     ShowTransferMenu();
                     break;
-                case "7":
+
+                case "6":
                     transactionService.ShowTransactionLog(currentUser!);
                     break;
-                case "8":
+
+                case "7":
                     loanService.ApplyForLoan(currentUser!);
                     break;
-                case "9":
-                    currentUser = null;
-                    ConsoleHelper.WriteSuccess("Successfully logged out.");
-                    Console.WriteLine("\nPress any key to return to the welcome screen.");
-                    Console.ReadKey();
+
+                case "8":
+                    interestService.CalculateInterest(currentUser!);
                     break;
+
+                case "9":
+                    Logout();
+                    break;
+
                 case "0":
                     Environment.Exit(0);
                     break;
+
                 default:
-                    ConsoleHelper.WriteError("Invalid choice. Press any key to try again.");
-                    Console.ReadKey();
+                    ConsoleHelper.WriteError("Invalid choice.");
+                    ConsoleHelper.PauseWithMessage();
                     break;
             }
         }
 
+        // Menu for admin users
         private void ShowAdminMenu()
         {
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("ADMIN MENU");
+
             Console.WriteLine("1. Admin Dashboard");
-            Console.WriteLine("2. View My Accounts (Personal)");
+            Console.WriteLine("2. View My Accounts");
             Console.WriteLine("3. Log Out");
             Console.WriteLine("0. Exit");
-            Console.Write("\nChoose option: ");
 
-            var choice = Console.ReadLine();
+            var choice = ConsoleHelper.PromptWithEscape("Choose option");
+
+            if (choice == "<ESC>" || string.IsNullOrWhiteSpace(choice))
+                return;
 
             switch (choice)
             {
                 case "1":
                     adminService.ShowAdminDashboard(currentUser!);
                     break;
+
                 case "2":
                     accountService.ShowAccounts(currentUser!);
                     break;
+
                 case "3":
-                    currentUser = null;
-                    ConsoleHelper.WriteSuccess("Successfully logged out.");
-                    Console.WriteLine("\nPress any key to return to the welcome screen.");
-                    Console.ReadKey();
+                    Logout();
                     break;
+
                 case "0":
                     Environment.Exit(0);
                     break;
+
                 default:
-                    ConsoleHelper.WriteError("Invalid choice. Press any key to try again.");
-                    Console.ReadKey();
+                    ConsoleHelper.WriteError("Invalid choice.");
+                    ConsoleHelper.PauseWithMessage();
                     break;
             }
         }
 
+        // Handles transfers
         private void ShowTransferMenu()
         {
+            Console.Clear();
             ConsoleHelper.WriteHeader("TRANSFER MONEY");
 
             Console.WriteLine("1. Transfer between my own accounts");
             Console.WriteLine("2. Transfer to another customer");
-            Console.WriteLine("3. Back to main menu");
+            Console.WriteLine("ESC. Back to main menu");
             Console.Write("\nChoose option: ");
 
-            var choice = Console.ReadLine();
+            var choice = ConsoleHelper.PromptWithEscape("Choose option");
+
+            if (choice == "<ESC>")
+                return;
 
             switch (choice)
             {
                 case "1":
                     transferService.DoTransferOwn(currentUser!);
                     break;
+
                 case "2":
-                    transferService.TransferToOther(currentUser!); // works once overload added
+                    transferService.TransferToOther(currentUser!);
                     break;
-                case "3":
-                    return;
+
                 default:
-                    ConsoleHelper.WriteError("Invalid choice. Press any key to try again.");
+                    ConsoleHelper.WriteError("Invalid choice.");
                     Console.ReadKey();
                     break;
             }
+        }
+
+
+        // Logout helper
+        private void Logout()
+        {
+            currentUser = null;
+            ConsoleHelper.WriteSuccess("Successfully logged out.");
+            Console.WriteLine("\nPress any key to continue.");
+            Console.ReadKey();
         }
     }
 }
