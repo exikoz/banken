@@ -28,31 +28,55 @@ namespace bank.Utils
             Console.WriteLine();
 
             // Print header
-            Console.WriteLine($"{"User ID",-15} {"Name",-25} {"Role",-15} {"# Accounts",-15}");
-            Console.WriteLine(new string('-', 70)); // Simple line separator
+            Console.WriteLine($"{"User ID",-15} {"Name",-25} {"Role",-15} {"# Accounts",-15} {"Status",-15}");
+            Console.WriteLine(new string('-', 85));
 
             // Print each user
             foreach (var user in users)
             {
-                // Change color for admins
-                if (user.IsAdmin())
+                string status = user.isBlocked ? "BLOCKED" : "Active";
+
+                // Change color for blocked users (red) or admins (cyan)
+                if (user.isBlocked)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                }
+                else if (user.IsAdmin())
                 {
                     Console.ForegroundColor = ConsoleColor.Cyan;
                 }
 
-                Console.WriteLine(
-                    $"{user.Id,-15} " +
-                    $"{user.Name,-25} " +
-                    $"{user.Role,-15} " +
-                    $"{user.Accounts.Count,-15}"
-                );
+                Console.Write($"{user.Id,-15} ");
+                Console.Write($"{user.Name,-25} ");
+                Console.Write($"{user.Role,-15} ");
+                Console.Write($"{user.Accounts.Count,-15} ");
 
+                // Color the status column
+                if (user.isBlocked)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                }
+                Console.Write($"{status,-15}");
                 Console.ResetColor();
+                Console.WriteLine();
             }
 
             // Print footer
-            Console.WriteLine(new string('-', 70));
+            Console.WriteLine(new string('-', 85));
             Console.WriteLine($"Total users: {users.Count}");
+
+            // Show count of blocked users if any
+            int blockedCount = users.Count(u => u.isBlocked);
+            if (blockedCount > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Blocked users: {blockedCount}");
+                Console.ResetColor();
+            }
         }
 
 
