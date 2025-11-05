@@ -22,8 +22,8 @@ namespace bank.Services
         {
             for (int i = 0; i < 3; i++)
             {
-                Console.Write("Enter PIN: ");
-                var pin = Console.ReadLine();
+                var pin = ConsoleHelper.PromptWithEscapeMasked("Enter PIN");
+                if (pin == "<ESC>") return false;
                 if (pin == user.PIN) return true;
                 ConsoleHelper.WriteWarning("Incorrect PIN.");
             }
@@ -44,6 +44,32 @@ namespace bank.Services
         {
             Console.Clear();
             ConsoleHelper.WriteHeader("TRANSFER BETWEEN OWN ACCOUNTS");
+
+            // User must have at least 2 accounts total
+            if (currentUser.Accounts.Count < 2)
+            {
+                ConsoleHelper.WriteWarning("You need at least two accounts to transfer between them.");
+                ConsoleHelper.PauseWithMessage();
+                return;
+            }
+
+            // User must have at least 1 account with balance
+            var accountsWithBalance = currentUser.Accounts.Where(a => a.Balance > 0).ToList();
+
+            if (accountsWithBalance.Count < 1)
+            {
+                ConsoleHelper.WriteWarning("No accounts have available balance.");
+                ConsoleHelper.PauseWithMessage();
+                return;
+            }
+
+            // And user must have at least one *other* account to transfer TO
+            if (accountsWithBalance.Count == 1 && currentUser.Accounts.Count == 2)
+            {
+                ConsoleHelper.WriteWarning("You only have one account with balance. No valid destination account.");
+                ConsoleHelper.PauseWithMessage();
+                return;
+            }
 
             var sourceAccounts = currentUser.Accounts
                 .Where(a => a.Balance > 0)
@@ -172,8 +198,7 @@ namespace bank.Services
             ConsoleHelper.WriteInfo($"From: {fromAcc.AccountNumber}");
             ConsoleHelper.WriteInfo($"To: {toAcc.AccountNumber}");
             ConsoleHelper.WriteInfo($"Amount: {amount:N2} {fromAcc.Currency}");
-            ConsoleHelper.WriteInfo($"Release at: {releaseTime:HH:mm:ss}");
-
+         
             ConsoleHelper.PauseWithMessage();
         }
 
