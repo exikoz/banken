@@ -94,9 +94,18 @@ namespace bank.Services
             Console.Clear();
             ConsoleHelper.WriteHeader("DEPOSIT");
 
+
             var account = SelectAccount(currentUser);
             if (account == null)
                 return;
+
+            if (!account.canTransfer)
+            {
+                ConsoleHelper.WriteError("There are pending transactions on your account. Please wait until they have finished processing.");
+                Console.ReadKey();
+                return;
+            }
+
 
             Console.Write($"Amount ({account.Currency}): ");
             if (!decimal.TryParse(Console.ReadLine(), out var amount) || amount <= 0)
@@ -106,31 +115,32 @@ namespace bank.Services
                 return;
             }
 
-            if (!account.canTransfer)
+
+            decimal before = account.Balance;
+            account.Deposit(amount);
+
+            if (account.Balance == before)
             {
-                ConsoleHelper.WriteError("There are pending transactions on your account. Please wait until they have finished processing.");
+                ConsoleHelper.WriteError("Deposit failed.");
                 return;
             }
 
+            ConsoleHelper.WriteSuccess($"Deposit processed at {DateTime.UtcNow}." +
+                $" \n Reserved amount: {amount} will be processed in 15 minutes. \n ");
+            ConsoleHelper.WriteInfo("Further transactions will be locked until the transaction is processed");
+            Console.WriteLine($"New reserved balance: {account.Balance:N2} {account.Currency}");
+
+
+
 
             account.canTransfer = false;
-            ConsoleHelper.WriteInfo("Transaction will be completed in 15 minutes.");
 
             Thread backgroundThread = new Thread(() =>
             {
                 try
                 {
                     Thread.Sleep(TimeSpan.FromMinutes(1));
-                    decimal before = account.Balance;
-                    account.Deposit(amount);
-                    if (account.Balance == before)
-                    {
-                        ConsoleHelper.WriteError("Deposit failed.");
-                        return;
-                    }
 
-                    ConsoleHelper.WriteSuccess($"Deposit completed at {DateTime.UtcNow}.");
-                    Console.WriteLine($"New balance: {account.Balance:N2} {account.Currency}");
                 }
                 finally
                 {
@@ -153,6 +163,14 @@ namespace bank.Services
             if (account == null)
                 return;
 
+
+            if (!account.canTransfer)
+            {
+                ConsoleHelper.WriteError("There are pending transactions on your account. Please wait until they have finished processing.");
+                Console.ReadKey();
+                return;
+            }
+
             Console.Write($"Amount ({account.Currency}): ");
             if (!decimal.TryParse(Console.ReadLine(), out var amount) || amount <= 0)
             {
@@ -166,28 +184,29 @@ namespace bank.Services
                 Console.ReadKey();
                 return;
             }
+
+
+
+
+            decimal before = account.Balance;
+            account.Withdraw(amount);
+            if (account.Balance == before)
+            {
+                ConsoleHelper.WriteError("Withdrawal failed.");
+            }
+
+
+            ConsoleHelper.WriteSuccess($"Withdrawal processed at {DateTime.UtcNow}." +
+                $" \n Reserved amount: {amount} will be processed in 15 minutes. \n ");
+            ConsoleHelper.WriteInfo("Further transactions will be locked until the transaction is processed");
+            Console.WriteLine($"New reserved balance: {account.Balance:N2} {account.Currency}");
+
             account.canTransfer = false;
-
-            ConsoleHelper.WriteInfo("Transaction will be completed in 15 minutes.");
-
-
-
-
             Thread backgroundThread = new Thread(() =>
             {
                 try
                 {
                     Thread.Sleep(TimeSpan.FromMinutes(1));
-                    decimal before = account.Balance;
-                    account.Withdraw(amount);
-                    if (account.Balance == before)
-                    {
-                        ConsoleHelper.WriteError("Withdrawal failed.");
-                        return;
-                    }
-
-                    ConsoleHelper.WriteSuccess($"Withdrawal completed at {DateTime.UtcNow}.");
-                    Console.WriteLine($"New balance: {account.Balance:N2} {account.Currency}");
                 }
                 finally
                 {
@@ -209,11 +228,6 @@ namespace bank.Services
 
             }
 
-            if (!account.canTransfer)
-            {
-                ConsoleHelper.WriteError("There are pending transactions on your account. Please wait until they have finished processing.");
-                return false;
-            }
 
             if (account is SavingsAccount savings)
             {
