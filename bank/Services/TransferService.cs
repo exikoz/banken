@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Linq;
+using System.Threading;
 using bank.Core;
 using bank.Utils;
 
@@ -17,7 +18,6 @@ namespace bank.Services
             this.accountService = accountService;
         }
 
-        // Pin validator with max 3 attempts
         private bool ValidatePin(User user)
         {
             for (int i = 0; i < 3; i++)
@@ -35,15 +35,6 @@ namespace bank.Services
             return false;
         }
 
-        // Simple withdrawal rule (no overdraft)
-        private bool ApplyWithdrawal(Account from, decimal amount, out decimal fee, out string type)
-        {
-            fee = 0;
-            type = "Standard";
-            return from.Balance >= amount;
-        }
-
-        // TRANSFER BETWEEN OWN ACC.
         public void DoTransferOwn(User currentUser)
         {
             Console.Clear();
@@ -57,7 +48,6 @@ namespace bank.Services
                 return;
             }
 
-            // Select source account
             Console.WriteLine("Select source account:\n");
             for (int i = 0; i < accounts.Count; i++)
                 Console.WriteLine($"{i + 1}. {accounts[i].AccountNumber} | {accounts[i].Balance:N2} {accounts[i].Currency}");
@@ -68,7 +58,6 @@ namespace bank.Services
 
             var fromAcc = accounts[srcChoice - 1];
 
-            // Select destination
             Console.WriteLine("\nSELECT DESTINATION ACCOUNT\n");
 
             var destList = accounts.Where(a => a != fromAcc).ToList();
@@ -81,7 +70,6 @@ namespace bank.Services
 
             var toAcc = destList[dstChoice - 1];
 
-            // ENTER AMOUNT (separate clean screen)
             Console.Clear();
             ConsoleHelper.WriteHeader("ENTER AMOUNT");
 
@@ -89,33 +77,40 @@ namespace bank.Services
             if (!decimal.TryParse(Console.ReadLine(), out decimal amount) || amount <= 0)
                 return;
 
-            // PIN screen
             Console.Clear();
             ConsoleHelper.WriteHeader("ENTER PIN TO CONFIRM TRANSFER");
 
             if (!ValidatePin(currentUser))
                 return;
 
-            // Check coverage
-            if (!ApplyWithdrawal(fromAcc, amount, out decimal fee, out string tType))
+            if (!accountService.CanWithdraw(fromAcc, amount))
             {
                 ConsoleHelper.WriteError("Insufficient coverage.");
                 ConsoleHelper.PauseWithMessage();
                 return;
             }
 
-            // Conversion
+            ConsoleHelper.WriteInfo("Transaction will be completed in 15 minutes.");
+            Thread.Sleep(TimeSpan.FromMinutes(15));
+
             decimal converted = amount;
             bool sameCurrency = fromAcc.Currency == toAcc.Currency;
 
             if (!sameCurrency)
                 converted = exchangeRateService.ConvertCurrency(amount, fromAcc.Currency, toAcc.Currency);
 
-            // Apply
-            fromAcc.Balance -= amount + fee;
-            toAcc.Balance += converted;
+            decimal before = fromAcc.Balance;
+            fromAcc.Withdraw(amount);
 
-            // Result screen
+            if (fromAcc.Balance == before)
+            {
+                ConsoleHelper.WriteError("Transfer failed.");
+                ConsoleHelper.PauseWithMessage();
+                return;
+            }
+
+            toAcc.Deposit(converted);
+
             Console.Clear();
             ConsoleHelper.WriteHeader("TRANSFER COMPLETED");
 
@@ -130,7 +125,6 @@ namespace bank.Services
             ConsoleHelper.PauseWithMessage();
         }
 
-        // TRANSFER TO OTHER USER
         public void TransferToOther(User sender)
         {
             Console.Clear();
@@ -144,7 +138,6 @@ namespace bank.Services
                 return;
             }
 
-            // Select sender account
             for (int i = 0; i < accounts.Count; i++)
                 Console.WriteLine($"{i + 1}. {accounts[i].AccountNumber} | {accounts[i].Balance:N2} {accounts[i].Currency}");
 
@@ -154,7 +147,6 @@ namespace bank.Services
 
             var fromAcc = accounts[choice - 1];
 
-            // Recipient
             Console.WriteLine("\nRECIPIENT ACCOUNT\n");
             Console.Write("Enter recipient account number: ");
             var toNumber = Console.ReadLine()?.Trim();
@@ -170,39 +162,46 @@ namespace bank.Services
 
             ConsoleHelper.WriteInfo($"Recipient: {toAcc.Owner.Name}");
 
-            // Amount (no clear here)
             Console.WriteLine("\nENTER AMOUNT");
             Console.Write($"Enter Amount ({fromAcc.Currency}): ");
 
             if (!decimal.TryParse(Console.ReadLine(), out decimal amount) || amount <= 0)
                 return;
 
-            // PIN (clear here)
             Console.Clear();
             ConsoleHelper.WriteHeader("ENTER PIN TO CONFIRM TRANSFER");
 
             if (!ValidatePin(sender))
                 return;
 
-            if (fromAcc.Balance < amount)
+            if (!accountService.CanWithdraw(fromAcc, amount))
             {
                 ConsoleHelper.WriteError("Insufficient funds.");
                 ConsoleHelper.PauseWithMessage();
                 return;
             }
 
-            // Conversion
+            ConsoleHelper.WriteInfo("Transaction will be completed in 15 minutes.");
+            Thread.Sleep(TimeSpan.FromMinutes(15));
+
             decimal converted = amount;
             bool sameCurrency = fromAcc.Currency == toAcc.Currency;
 
             if (!sameCurrency)
                 converted = exchangeRateService.ConvertCurrency(amount, fromAcc.Currency, toAcc.Currency);
 
-            // Apply
-            fromAcc.Balance -= amount;
-            toAcc.Balance += converted;
+            decimal before = fromAcc.Balance;
+            fromAcc.Withdraw(amount);
 
-            // Result
+            if (fromAcc.Balance == before)
+            {
+                ConsoleHelper.WriteError("Transfer failed.");
+                ConsoleHelper.PauseWithMessage();
+                return;
+            }
+
+            toAcc.Deposit(converted);
+
             Console.Clear();
             ConsoleHelper.WriteHeader("TRANSFER COMPLETED");
 
