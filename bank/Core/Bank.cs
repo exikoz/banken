@@ -5,6 +5,21 @@ using bank.Utils;
 
 namespace bank.Core
 {
+    // 8-char A–Z0–9 transaction IDs
+    public static class TransactionIdGenerator
+    {
+        private static readonly Random _rng = new Random();
+        private static readonly char[] _alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".ToCharArray();
+
+        public static string Generate()
+        {
+            var buff = new char[8];
+            for (int i = 0; i < 8; i++)
+                buff[i] = _alphabet[_rng.Next(_alphabet.Length)];
+            return new string(buff);
+        }
+    }
+
     public class Bank
     {
         public List<User> Users { get; } = new();
@@ -13,13 +28,9 @@ namespace bank.Core
 
         public Bank() { }
 
-        // Find an account by number
         public Account? FindAccount(string accountNumber)
-        {
-            return Accounts.FirstOrDefault(a => a.AccountNumber == accountNumber);
-        }
+            => Accounts.FirstOrDefault(a => a.AccountNumber == accountNumber);
 
-        // Create account with auto-generated number
         public Account OpenAccount(User user, string accountType)
         {
             if (!Users.Any(u => u.Id == user.Id))
@@ -43,9 +54,7 @@ namespace bank.Core
 
             ConsoleHelper.WriteInfo("Select currency:");
             for (int i = 0; i < currencies.Count; i++)
-            {
                 Console.WriteLine($"{i + 1}. {currencies[i]}");
-            }
 
             var input = ConsoleHelper.Prompt("Choice");
             var choice = int.TryParse(input, out int c) && c >= 1 && c <= currencies.Count
@@ -66,7 +75,6 @@ namespace bank.Core
             return account;
         }
 
-        // Manual creation for seeding
         public Account OpenAccount(User user, string accountNumber, string accountType)
         {
             if (!Users.Any(u => u.Id == user.Id))
@@ -86,88 +94,94 @@ namespace bank.Core
             return account;
         }
 
-        // Transfer between own accounts
         public bool Transfer(User user, string fromAccountNumber, string toAccountNumber, decimal amount)
         {
-            if (user == null)
-            {
-                ConsoleHelper.WriteError("Invalid user");
-                return false;
-            }
-            if (string.IsNullOrWhiteSpace(fromAccountNumber) || string.IsNullOrWhiteSpace(toAccountNumber))
-            {
-                ConsoleHelper.WriteError("Missing account numbers");
-                return false;
-            }
-            if (fromAccountNumber == toAccountNumber)
-            {
-                ConsoleHelper.WriteError("Same account");
-                return false;
-            }
-            if (amount <= 0)
-            {
-                ConsoleHelper.WriteError("Invalid amount");
-                return false;
-            }
+            if (user == null) { ConsoleHelper.WriteError("Invalid user"); return false; }
+            if (string.IsNullOrWhiteSpace(fromAccountNumber) || string.IsNullOrWhiteSpace(toAccountNumber)) { ConsoleHelper.WriteError("Missing account numbers"); return false; }
+            if (fromAccountNumber == toAccountNumber) { ConsoleHelper.WriteError("Same account"); return false; }
+            if (amount <= 0) { ConsoleHelper.WriteError("Invalid amount"); return false; }
 
             var from = FindAccount(fromAccountNumber);
             var to = FindAccount(toAccountNumber);
+            if (from == null || to == null) { ConsoleHelper.WriteError("Account not found"); return false; }
+            if (from.Owner != user || to.Owner != user) { ConsoleHelper.WriteError("Transfers only allowed between your own accounts"); return false; }
 
-            if (from == null || to == null)
-            {
-                ConsoleHelper.WriteError("Account not found");
-                return false;
-            }
-
-            if (from.Owner != user || to.Owner != user)
-            {
-                ConsoleHelper.WriteError("Transfers only allowed between your own accounts");
-                return false;
-            }
-
-            // Overdraft paused. Only allow transfer if balance is enough.
             bool ok = amount <= from.Balance;
-
-            if (!ok)
-            {
-                ConsoleHelper.WriteError("Insufficient funds");
-                return false;
-            }
+            if (!ok) { ConsoleHelper.WriteError("Insufficient funds"); return false; }
 
             decimal before = from.Balance;
             from.Withdraw(amount);
-
-            if (from.Balance != before - amount)
-            {
-                ConsoleHelper.WriteError("Withdraw failed");
-                return false;
-            }
+            if (from.Balance != before - amount) { ConsoleHelper.WriteError("Withdraw failed"); return false; }
 
             to.Deposit(amount);
             ConsoleHelper.WriteSuccess($"Transferred {amount} from {fromAccountNumber} to {toAccountNumber}");
             return true;
         }
 
-        // Register user
         public void RegisterUser(User user)
         {
             if (!Users.Any(u => u.Id == user.Id))
                 Users.Add(user);
         }
 
-        // Find user by id
         public User? FindUser(string userId)
-        {
-            return Users.FirstOrDefault(u => u.Id == userId);
-        }
+            => Users.FirstOrDefault(u => u.Id == userId);
 
-        // Update savings interest rate
         public void UpdateDefaultSavingsRate(decimal newRate)
         {
-            if (newRate > 0 && newRate < 10)
-                DefaultSavingsInterestRate = newRate;
-            else
-                ConsoleHelper.WriteError("Rate must be 0–10%");
+            if (newRate > 0 && newRate < 10) DefaultSavingsInterestRate = newRate;
+            else ConsoleHelper.WriteError("Rate must be 0–10%");
         }
+
+        public void ProcessPendingTransfers()
+        {
+            foreach (var account in Accounts)
+            {
+                var pending = account.Transactions
+                    .Where(t => t.IsPending && t.ReleaseAt <= DateTime.UtcNow)
+                    .ToList();
+
+                foreach (var tx in pending)
+                {
+                    var receiver = FindAccount(tx.ToAccount);
+                    if (receiver == null)
+                        continue;
+
+                    // 1. Add money to receiver balance
+                    receiver.Balance += tx.Amount;
+
+                    // 2. Mark original TX (sender’s pending) as completed
+                    tx.IsPending = false;
+                    tx.Status = "Completed";
+                    tx.ReleaseAt = null;
+
+                    // 3. Create matching deposit TX for receiver
+                    var receiveTx = new Transaction(
+                        id: tx.Id,                         // SAME ID
+                        accountNumber: receiver.AccountNumber,
+                        timeStamp: DateTime.UtcNow,
+                        type: "Transfer",
+                        amount: tx.Amount,
+                        currency: receiver.Currency,
+                        accountType: receiver.AccountType,
+                        fromAccount: tx.FromAccount,
+                        toAccount: tx.ToAccount,
+                        fromUser: tx.FromUser,
+                        toUser: tx.ToUser
+                    )
+                    {
+                        IsPending = false,
+                        Status = "Completed",
+                        IsInternal = false                // External transfer
+                    };
+
+                    // 4. Add to receiver’s transaction list
+                    receiver.Transactions.Add(receiveTx);
+                }
+            }
+        }
+
+        // Wrapper for generator
+        public static string GenerateTransactionId() => TransactionIdGenerator.Generate();
     }
 }

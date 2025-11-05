@@ -1,4 +1,4 @@
-﻿using bank.Services;
+using bank.Services;
 using bank.Utils;
 
 namespace bank.Core
@@ -31,7 +31,6 @@ namespace bank.Core
             DataSeeder.SeedTestData(bank);
         }
 
-        // Handles top-level UI loop
         public void DrawUI()
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
@@ -53,7 +52,6 @@ namespace bank.Core
             }
         }
 
-        // Login options
         private void ShowLoginMenu()
         {
             ConsoleHelper.WriteHeader("WELCOME");
@@ -83,7 +81,6 @@ namespace bank.Core
             }
         }
 
-        // Routing user to correct menu
         private void ShowMainMenu()
         {
             Console.WriteLine("MALMÖ ROYAL BANK");
@@ -95,7 +92,6 @@ namespace bank.Core
                 ShowCustomerMenu();
         }
 
-        // Menu for regular customers
         private void ShowCustomerMenu()
         {
             ConsoleHelper.ClearScreen();
@@ -166,7 +162,6 @@ namespace bank.Core
             }
         }
 
-        // Menu for admin users
         private void ShowAdminMenu()
         {
             ConsoleHelper.ClearScreen();
@@ -207,20 +202,18 @@ namespace bank.Core
             }
         }
 
-        // Handles transfers
         private void ShowTransferMenu()
         {
             Console.Clear();
-            ConsoleHelper.WriteHeader("TRANSFER MONEY");
+            ConsoleHelper.WriteHeader("TRANSFER MENU");
 
-            Console.WriteLine("1. Transfer between my own accounts");
+            Console.WriteLine("1. Transfer between own accounts");
             Console.WriteLine("2. Transfer to another customer");
-            Console.WriteLine("ESC. Back to main menu");
-            Console.Write("\nChoose option: ");
+            Console.WriteLine("0. Back");
 
             var choice = ConsoleHelper.PromptWithEscape("Choose option");
 
-            if (choice == "<ESC>")
+            if (choice == "<ESC>" || choice == "0")
                 return;
 
             switch (choice)
@@ -235,19 +228,20 @@ namespace bank.Core
 
                 default:
                     ConsoleHelper.WriteError("Invalid choice.");
-                    Console.ReadKey();
+                    ConsoleHelper.PauseWithMessage();
                     break;
             }
         }
 
-
-        // Logout helper
         private void Logout()
         {
             currentUser = null;
-            ConsoleHelper.WriteSuccess("Successfully logged out.");
-            Console.WriteLine("\nPress any key to continue.");
-            Console.ReadKey();
+            if (!hasShownSplash)
+            {
+                ConsoleHelper.WriteInfo("See you next time!");
+                ConsoleHelper.PauseWithMessage();
+                hasShownSplash = true;
+            }
         }
     }
 }

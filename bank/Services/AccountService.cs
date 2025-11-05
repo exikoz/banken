@@ -1,7 +1,8 @@
-﻿using bank.Core;
+using bank.Core;
 using bank.Utils;
 using System;
 using System.Linq;
+using System.Threading;
 
 namespace bank.Services
 {
@@ -16,7 +17,6 @@ namespace bank.Services
             this.exchangerateService = new ExchangerateService();
         }
 
-        // Shows all accounts for a user
         public void ShowAccounts(User user)
         {
             ConsoleHelper.ClearScreen();
@@ -62,7 +62,6 @@ namespace bank.Services
                 return;
         }
 
-        // Creates a new account
         public void CreateAccount(User user)
         {
             ConsoleHelper.ClearScreen();
@@ -90,7 +89,6 @@ namespace bank.Services
             ConsoleHelper.PauseWithMessage();
         }
 
-        // Deposit money
         public void Deposit(User currentUser)
         {
             Console.Clear();
@@ -107,6 +105,9 @@ namespace bank.Services
                 Console.ReadKey();
                 return;
             }
+
+            ConsoleHelper.WriteInfo("Transaction will be completed in 15 minutes.");
+            Thread.Sleep(TimeSpan.FromMinutes(15));
 
             decimal before = account.Balance;
 
@@ -127,7 +128,6 @@ namespace bank.Services
             Console.ReadKey();
         }
 
-        // Withdraw money
         public void Withdraw(User currentUser)
         {
             Console.Clear();
@@ -145,13 +145,20 @@ namespace bank.Services
                 return;
             }
 
-            // Store before balance to compare result
+            if (!CanWithdraw(account, amount))
+            {
+                ConsoleHelper.WriteError("Insufficient funds for this withdrawal.");
+                Console.ReadKey();
+                return;
+            }
+
+            ConsoleHelper.WriteInfo("Transaction will be completed in 15 minutes.");
+            Thread.Sleep(TimeSpan.FromMinutes(15));
+
             decimal before = account.Balance;
 
-            // Perform withdraw
             account.Withdraw(amount);
 
-            // If no change → fail
             if (account.Balance == before)
             {
                 ConsoleHelper.WriteError("Withdraw failed. Check balance or limits.");
@@ -159,7 +166,6 @@ namespace bank.Services
                 return;
             }
 
-            // Success message (unified style)
             Console.WriteLine();
             ConsoleHelper.WriteSuccess($"Withdraw completed.");
             Console.WriteLine($"New balance: {account.Balance:N2} {account.Currency}");
@@ -168,8 +174,23 @@ namespace bank.Services
             Console.ReadKey();
         }
 
+        public bool CanWithdraw(Account account, decimal amount)
+        {
+            if (amount <= 0)
+                return false;
 
-        // Lets user pick which account to use
+            if (account is SavingsAccount savings)
+            {
+                decimal total = amount;
+                if (savings.FreeWithdrawalsLeft <= 0)
+                    total += savings.WithdrawFee;
+
+                return account.Balance >= total;
+            }
+
+            return account.Balance >= amount;
+        }
+
         private Account? SelectAccount(User user)
         {
             if (!user.Accounts.Any())

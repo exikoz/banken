@@ -15,14 +15,22 @@ namespace bank.Core
 
         public string Type { get; } // Deposit | Withdraw | Transfer
         public decimal Amount { get; }
+        public bool IsInternal { get; set; }
+
 
         // Optional metadata to describe the context of the transaction
         public string? Currency { get; set; }
-        public string? AccountType { get; set; } // Checking, Savings, etc.
-        public string? FromAccount { get; set; } // For transfers
-        public string? ToAccount { get; set; }   // For transfers
-        public string? FromUser { get; set; }    // For transfers
-        public string? ToUser { get; set; }      // For transfers
+        public string? AccountType { get; set; }    // Checking, Savings, etc.
+        public string? FromAccount { get; set; }    // For transfers
+        public string? ToAccount { get; set; }      // For transfers
+        public string? FromUser { get; set; }       // For transfers
+        public string? ToUser { get; set; }         // For transfers
+
+        // Pending transfer support
+        public bool IsPending { get; set; }         // Marks if transaction is pending
+        public DateTime? ReleaseAt { get; set; }    // When it should complete
+        public string? Status { get; set; }         // Pending | Completed
+
 
         // Basic constructor used for simple deposit and withdraw operations
         public Transaction(string id, string accountNumber, DateTime timeStamp, string type, decimal amount)
@@ -41,7 +49,13 @@ namespace bank.Core
             TimeStamp = timeStamp;
             Type = type;
             Amount = amount;
+
+            // Default pending values for standard transactions
+            IsPending = false;
+            Status = "Completed";
+            ReleaseAt = null;
         }
+
 
         // Extended constructor used when more context is needed (for example transfers)
         public Transaction(
@@ -57,7 +71,7 @@ namespace bank.Core
             string? fromUser,
             string? toUser)
         {
-            // Basic validation kept similar to the simple constructor
+            // Basic validation
             if (string.IsNullOrWhiteSpace(id))
                 Console.WriteLine("Transaction: Id is required.");
             if (string.IsNullOrWhiteSpace(accountNumber))
@@ -80,6 +94,11 @@ namespace bank.Core
             ToAccount = toAccount;
             FromUser = fromUser;
             ToUser = toUser;
+
+            // Default pending values
+            IsPending = false;
+            Status = "Completed";
+            ReleaseAt = null;
         }
     }
 }
