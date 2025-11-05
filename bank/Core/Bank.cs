@@ -25,6 +25,7 @@ namespace bank.Core
         public List<User> Users { get; } = new();
         public List<Account> Accounts { get; } = new();
         public decimal DefaultSavingsInterestRate { get; private set; } = 3.0m;
+        public List<Transaction> PendingTransfers { get; } = new();
 
         public Bank() { }
 

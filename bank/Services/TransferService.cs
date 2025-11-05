@@ -71,6 +71,7 @@ namespace bank.Services
                 .Where(a => a != fromAcc)
                 .ToList();
 
+            Console.WriteLine("\nSelect destination account:\n");
             for (int i = 0; i < destList.Count; i++)
                 Console.WriteLine($"{i + 1}. {destList[i].AccountNumber} | {destList[i].Balance:N2} {destList[i].Currency}");
 
@@ -116,6 +117,7 @@ namespace bank.Services
             ConsoleHelper.WriteHeader("ENTER PIN TO CONFIRM TRANSFER");
             if (!ValidatePin(currentUser)) return;
 
+            // Withdraw check
             if (!ApplyWithdrawal(fromAcc, amount, out decimal fee, out string _))
             {
                 ConsoleHelper.WriteError("Insufficient coverage.");
@@ -123,18 +125,17 @@ namespace bank.Services
                 return;
             }
 
+            // Create PENDING TRANSFER (same mechanism as external)
+            string txId = Bank.GenerateTransactionId();
+            DateTime releaseTime = DateTime.UtcNow.AddMinutes(3);
+
             decimal converted = amount;
             bool sameCurrency = fromAcc.Currency == toAcc.Currency;
 
             if (!sameCurrency)
                 converted = exchangeRateService.ConvertCurrency(amount, fromAcc.Currency, toAcc.Currency);
 
-            fromAcc.Balance -= amount + fee;
-            toAcc.Balance += converted;
-
-            string txId = Bank.GenerateTransactionId();
-
-            var withdrawTx = new Transaction(
+            var pendingTx = new Transaction(
                 id: txId,
                 accountNumber: fromAcc.AccountNumber,
                 timeStamp: DateTime.UtcNow,
@@ -148,47 +149,34 @@ namespace bank.Services
                 toUser: currentUser.Name
             )
             {
-                IsPending = false,
-                Status = "Completed",
-                IsInternal = true
+                IsPending = true,
+                Status = "Pending",
+                IsInternal = true,
+                ReleaseAt = releaseTime,
+                ConvertedAmount = converted,
+                TargetCurrency = toAcc.Currency
             };
 
-            var depositTx = new Transaction(
-                id: txId,
-                accountNumber: toAcc.AccountNumber,
-                timeStamp: DateTime.UtcNow,
-                type: "Transfer",
-                amount: sameCurrency ? amount : converted,
-                currency: toAcc.Currency,
-                accountType: toAcc.AccountType,
-                fromAccount: fromAcc.AccountNumber,
-                toAccount: toAcc.AccountNumber,
-                fromUser: currentUser.Name,
-                toUser: currentUser.Name
-            )
-            {
-                IsPending = false,
-                Status = "Completed",
-                IsInternal = true
-            };
+            // Attach SAME transaction object to both accounts
+            fromAcc.Transactions.Add(pendingTx);
+            toAcc.Transactions.Add(pendingTx);
 
-            fromAcc.Transactions.Add(withdrawTx);
-            toAcc.Transactions.Add(depositTx);
+            // Register in bank queue
+            bank.PendingTransfers.Add(pendingTx);
 
             Console.Clear();
-            ConsoleHelper.WriteHeader("TRANSFER COMPLETED");
+            ConsoleHelper.WriteHeader("TRANSFER INITIATED");
 
-            string display = sameCurrency
-                ? $"{amount:N2} {fromAcc.Currency}"
-                : $"{amount:N2} {fromAcc.Currency} → {converted:N2} {toAcc.Currency}";
-
-            ConsoleHelper.WriteSuccess($"Transfer completed: {display}");
+            ConsoleHelper.WriteSuccess($"Transfer is now pending (3 minutes).");
             ConsoleHelper.WriteSuccess($"Transaction ID: {txId}");
-            ConsoleHelper.WriteSuccess($"Sender balance: {fromAcc.Balance:N2} {fromAcc.Currency}");
-            ConsoleHelper.WriteSuccess($"Receiver balance: {toAcc.Balance:N2} {toAcc.Currency}");
+            ConsoleHelper.WriteInfo($"From: {fromAcc.AccountNumber}");
+            ConsoleHelper.WriteInfo($"To: {toAcc.AccountNumber}");
+            ConsoleHelper.WriteInfo($"Amount: {amount:N2} {fromAcc.Currency}");
+            ConsoleHelper.WriteInfo($"Release at: {releaseTime:HH:mm:ss}");
 
             ConsoleHelper.PauseWithMessage();
         }
+
 
         // EXTERNAL TRANSFER
         public void TransferToOther(User sender)
