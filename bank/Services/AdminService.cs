@@ -288,21 +288,22 @@ namespace bank.Services
         private void AddExchangeRate()
         {
             ConsoleHelper.ClearScreen();
-            ConsoleHelper.WriteHeader("UPDATE EXCHANGE RATES");
+            ConsoleHelper.WriteHeader("UPDATE/DELETE/CREATE EXCHANGE RATES");
 
             var rates = searchService.GetAllExchangeRates();
 
             foreach (var r in rates)
                 Console.WriteLine($"{(r.CustomCode ?? r.Code.ToString())} -> {r.Rate}");
 
-            var selected = ReadInput("Enter currency code or NEW");
+            var selected = ReadInput("Enter currency code or type (N) to add a new one");
             if (IsBack(selected)) return;
 
-            if (selected.Equals("NEW", StringComparison.OrdinalIgnoreCase))
+            if (selected.Equals("N", StringComparison.OrdinalIgnoreCase))
             {
                 AddNewCurrency();
                 return;
             }
+
 
             if (!Enum.TryParse(selected, true, out CurrencyCode code))
             {
@@ -311,19 +312,37 @@ namespace bank.Services
                 return;
             }
 
-            var rateText = ReadInput($"Enter new rate for {selected}");
-            if (IsBack(rateText)) return;
-
-            if (!decimal.TryParse(rateText, out var newRate))
+            Console.WriteLine($"You chose: {selected}");
+            var CrudChoice = ReadInput($"Choose: (D) for delete - (U) to update");
+            if (CrudChoice.Equals("U", StringComparison.OrdinalIgnoreCase))
             {
-                ConsoleHelper.WriteWarning("Invalid rate.");
+                var rateText = ReadInput($"Enter new rate for {selected}");
+                if (IsBack(rateText)) return;
+
+                if (!decimal.TryParse(rateText, out var newRate))
+                {
+                    ConsoleHelper.WriteWarning("Invalid rate.");
+                    ConsoleHelper.PauseWithMessage();
+                    return;
+                }
+
+                exchangerateService.AddRates(new ExchangeRate(code, newRate));
+                ConsoleHelper.WriteSuccess("Rate updated.");
                 ConsoleHelper.PauseWithMessage();
-                return;
+            }
+            else if (CrudChoice.Equals("D", StringComparison.OrdinalIgnoreCase))
+            {
+                var rateText = ReadInput($"Are you sure? (Y) / (N) ");
+                if (IsBack(rateText)) return;
+                if(rateText.Equals("Y", StringComparison.OrdinalIgnoreCase))
+                {
+                    exchangerateService.DeleteField(code);
+                }
+
             }
 
-            exchangerateService.AddRates(new ExchangeRate(code, newRate));
-            ConsoleHelper.WriteSuccess("Rate updated.");
-            ConsoleHelper.PauseWithMessage();
+
+
         }
 
         // Adds a completely new currency

@@ -8,7 +8,7 @@ namespace bank.Core
         public string Id { get; }
         public string AccountNumber { get; }
         public DateTime TimeStamp { get; } = DateTime.Now;
-        public DateTime ProcessDuration => TimeStamp.AddMinutes(15);
+        public DateTime ProcessDuration => TimeStamp.AddMinutes(1);
 
         public bool IsProcessed => DateTime.Now > ProcessDuration;
 
