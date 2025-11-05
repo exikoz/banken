@@ -22,8 +22,8 @@ namespace bank.Services
         {
             for (int i = 0; i < 3; i++)
             {
-                Console.Write("Enter PIN: ");
-                var pin = Console.ReadLine();
+                var pin = ConsoleHelper.PromptWithEscapeMasked("Enter PIN");
+                if (pin == "<ESC>") return false;
                 if (pin == user.PIN) return true;
                 ConsoleHelper.WriteWarning("Incorrect PIN.");
             }

@@ -221,5 +221,44 @@ namespace bank.Utils
             }
         }
 
+        /// <summary>
+        /// Prompt for masked input (e.g. PIN) with escape support
+        /// </summary>
+        public static string PromptWithEscapeMasked(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Write($"{message}: ");
+            Console.ResetColor();
+
+            var input = "";
+            while (true)
+            {
+                var key = Console.ReadKey(true);
+
+                if (key.Key == ConsoleKey.Enter)
+                {
+                    Console.WriteLine();
+                    return input; // confirm input
+                }
+
+                if (key.Key == ConsoleKey.Escape)
+                {
+                    Console.WriteLine();
+                    return "<ESC>"; // go back
+                }
+
+                if (key.Key == ConsoleKey.Backspace && input.Length > 0)
+                {
+                    input = input.Substring(0, input.Length - 1);
+                    Console.Write("\b \b");
+                }
+                else if (!char.IsControl(key.KeyChar))
+                {
+                    input += key.KeyChar;
+                    Console.Write("*");
+                }
+            }
+        }
+
     }
 }

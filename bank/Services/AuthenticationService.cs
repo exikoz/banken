@@ -82,7 +82,7 @@ namespace bank.Services
 
             while (user.FailedLoginAttempts < maxAttempts)
             {
-                var pin = ConsoleHelper.PromptWithEscape("Enter PIN (4 digits)");
+                var pin = ConsoleHelper.PromptWithEscapeMasked("Enter PIN (4 digits)");
 
                 // ESC → go back
                 if (pin == "<ESC>") return null;
@@ -160,7 +160,7 @@ namespace bank.Services
         // Gets PIN and confirms it
         private string? GetAndConfirmPIN()
         {
-            var pin = ConsoleHelper.PromptWithEscape("Create PIN (4 digits)");
+            var pin = ConsoleHelper.PromptWithEscapeMasked("Create PIN (4 digits)");
 
             if (pin == "<ESC>") return "<ESC>";
 
@@ -171,7 +171,7 @@ namespace bank.Services
                 return null;
             }
 
-            var confirmPin = ConsoleHelper.PromptWithEscape("Confirm PIN");
+            var confirmPin = ConsoleHelper.PromptWithEscapeMasked("Confirm PIN");
 
             if (confirmPin == "<ESC>") return "<ESC>";
 
