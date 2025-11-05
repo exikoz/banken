@@ -16,7 +16,7 @@ namespace bank.Services
 
         public void ShowTransactionLog(User currentUser)
         {
-            Console.Clear();
+            ConsoleHelper.ClearScreen();
             ConsoleHelper.WriteHeader("TRANSACTION LOG");
 
             // Run pending processing before showing
@@ -44,11 +44,16 @@ namespace bank.Services
                 return;
             }
 
-            // Header
+            ConsoleHelper.WriteInfo($"Showing {allTransactions.Count} transaction(s)");
+            Console.WriteLine();
+
+            // Header with color
+            Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine(
-                $"{"Date",-22} | {"Type",-10} | {"Amount",-12} | {"Currency",-8} | {"From",-25} | {"To",-25} | {"Status",-15} | {"ID",-10}"
+                $"{"Date",-22} | {"Type",-10} | {"Amount",-12} | {"Curr",-5} | {"From",-25} | {"To",-25} | {"Status",-20} | {"ID",-10}"
             );
-            Console.WriteLine(new string('-', 150));
+            Console.ResetColor();
+            ConsoleHelper.WriteSeparator('=', 150);
 
             foreach (var item in allTransactions)
             {
@@ -64,8 +69,9 @@ namespace bank.Services
                     t.ToAccount == "0000" ? "ATM" :
                     $"{t.ToUser} ({t.ToAccount})";
 
-                // Status formatting
+                // Status formatting and color
                 string statusText = t.Status;
+                ConsoleColor statusColor = ConsoleColor.White;
 
                 if (t.Status == "Pending" && t.ReleaseAt.HasValue)
                 {
@@ -73,21 +79,51 @@ namespace bank.Services
                     if (minutesLeft < 0) minutesLeft = 0;
 
                     statusText = $"Pending ({minutesLeft} min)";
+                    statusColor = ConsoleColor.Yellow;
+                }
+                else if (t.Status == "Completed")
+                {
+                    statusText = "Completed";
+                    statusColor = ConsoleColor.Green;
+                }
+                else if (t.Status == "Failed")
+                {
+                    statusText = "Failed";
+                    statusColor = ConsoleColor.Red;
                 }
 
-                Console.WriteLine(
-                    $"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} | " +
-                    $"{t.Type,-10} | " +
-                    $"{t.Amount,-12:N2} | " +
-                    $"{t.Currency,-8} | " +
-                    $"{fromDisplay,-25} | " +
-                    $"{toDisplay,-25} | " +
-                    $"{statusText,-20} | " +
-                    $"{t.Id,-10}"
-                );
+                // Date
+                Console.Write($"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} | ");
+
+                // Type
+                Console.Write($"{t.Type,-10} | ");
+
+                // Amount
+                Console.Write($"{t.Amount,-12:N2} | ");
+
+                // Currency
+                Console.Write($"{t.Currency,-5} | ");
+
+                // From
+                Console.Write($"{fromDisplay,-25} | ");
+
+                // To
+                Console.Write($"{toDisplay,-25} | ");
+
+                // Status with color for entire column
+                Console.ForegroundColor = statusColor;
+                Console.Write($"{statusText,-20} | ");
+                Console.ResetColor();
+
+                // Transaction ID
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.Write($"{t.Id,-10}");
+                Console.ResetColor();
+                Console.WriteLine();
             }
 
-            Console.WriteLine(new string('-', 150));
+            ConsoleHelper.WriteSeparator('=', 150);
+
             ConsoleHelper.PauseWithMessage();
         }
     }

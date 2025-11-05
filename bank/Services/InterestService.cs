@@ -42,12 +42,14 @@ namespace bank.Services
 
             // Display account list
             ConsoleHelper.WriteInfo("Select a savings account (ESC to go back):");
+            Console.WriteLine();
 
             for (int i = 0; i < savingsAccounts.Count; i++)
             {
                 var acc = savingsAccounts[i];
-                Console.WriteLine($"{i + 1}. {acc.AccountNumber} - {acc.Balance:N2} {acc.Currency}");
+                ConsoleHelper.WriteMenuOption($"{i + 1}", $"{acc.AccountNumber} - {acc.Balance:N2} {acc.Currency}");
             }
+            Console.WriteLine();
 
             // ESC support
             var input = ConsoleHelper.PromptWithEscape("Choose account");

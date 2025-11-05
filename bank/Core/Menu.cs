@@ -56,12 +56,14 @@ namespace bank.Core
         {
             ConsoleHelper.WriteHeader("WELCOME");
 
-            Console.WriteLine("1. Log In");
-            Console.WriteLine("2. Register New User");
-            Console.WriteLine("0. Exit");
-            Console.Write("\nChoose option: ");
+            ConsoleHelper.WriteMenuOption("1", "Log In");
+            ConsoleHelper.WriteMenuOption("2", "Register New User");
+            ConsoleHelper.WriteMenuOption("0", "Exit");
 
-            var choice = Console.ReadLine();
+            var choice = ConsoleHelper.PromptWithEscape("Choose option");
+
+            if (choice == "<ESC>")
+                return;
 
             switch (choice)
             {
@@ -76,7 +78,7 @@ namespace bank.Core
                     break;
                 default:
                     ConsoleHelper.WriteError("Invalid choice.");
-                    Console.ReadKey();
+                    ConsoleHelper.PauseWithMessage();
                     break;
             }
         }
@@ -97,16 +99,17 @@ namespace bank.Core
             ConsoleHelper.ClearScreen();
             ConsoleHelper.WriteHeader("MAIN MENU");
 
-            Console.WriteLine("1. View My Accounts");
-            Console.WriteLine("2. Deposit Money");
-            Console.WriteLine("3. Withdraw Money");
-            Console.WriteLine("4. Open New Account");
-            Console.WriteLine("5. Transfer Money");
-            Console.WriteLine("6. View Transaction Log");
-            Console.WriteLine("7. Apply for Loan");
-            Console.WriteLine("8. Interest Calculation");
-            Console.WriteLine("9. Log Out");
-            Console.WriteLine("0. Exit");
+            ConsoleHelper.WriteMenuOption("1", "View My Accounts");
+            ConsoleHelper.WriteMenuOption("2", "Deposit Money");
+            ConsoleHelper.WriteMenuOption("3", "Withdraw Money");
+            ConsoleHelper.WriteMenuOption("4", "Open New Account");
+            ConsoleHelper.WriteMenuOption("5", "Transfer Money");
+            ConsoleHelper.WriteMenuOption("6", "View Transaction Log");
+            ConsoleHelper.WriteMenuOption("7", "Apply for Loan");
+            ConsoleHelper.WriteMenuOption("8", "Interest Calculation");
+            ConsoleHelper.WriteMenuOption("9", "Log Out");
+            ConsoleHelper.WriteMenuOption("0", "Exit");
+            Console.WriteLine();
 
             var choice = ConsoleHelper.PromptWithEscape("Choose option");
 
@@ -167,10 +170,11 @@ namespace bank.Core
             ConsoleHelper.ClearScreen();
             ConsoleHelper.WriteHeader("ADMIN MENU");
 
-            Console.WriteLine("1. Admin Dashboard");
-            Console.WriteLine("2. View My Accounts");
-            Console.WriteLine("3. Log Out");
-            Console.WriteLine("0. Exit");
+            ConsoleHelper.WriteMenuOption("1", "Admin Dashboard");
+            ConsoleHelper.WriteMenuOption("2", "View My Accounts");
+            ConsoleHelper.WriteMenuOption("3", "Log Out");
+            ConsoleHelper.WriteMenuOption("0", "Exit");
+            Console.WriteLine();
 
             var choice = ConsoleHelper.PromptWithEscape("Choose option");
 
@@ -207,9 +211,10 @@ namespace bank.Core
             Console.Clear();
             ConsoleHelper.WriteHeader("TRANSFER MENU");
 
-            Console.WriteLine("1. Transfer between own accounts");
-            Console.WriteLine("2. Transfer to another customer");
-            Console.WriteLine("0. Back");
+            ConsoleHelper.WriteMenuOption("1", "Transfer between own accounts");
+            ConsoleHelper.WriteMenuOption("2", "Transfer to another customer");
+            ConsoleHelper.WriteMenuOption("0", "Back");
+            Console.WriteLine();
 
             var choice = ConsoleHelper.PromptWithEscape("Choose option");
 

@@ -41,23 +41,7 @@ namespace bank.Services
                 return;
             }
 
-            foreach (var acc in user.Accounts)
-            {
-                var type = acc is CheckingAccount ? "Checking" :
-                           acc is SavingsAccount ? "Savings" : "Account";
-
-
-
-                Console.WriteLine($"{acc.AccountNumber} - {type}");
-                Console.WriteLine($"Balance: {acc.Balance:N2} {acc.Currency}");
-                Console.WriteLine();
-            }
-
-            decimal totalSek = 0;
-            foreach (var acc in user.Accounts)
-                totalSek += exchangerateService.ConvertToSek(acc.Currency, acc.Balance);
-
-            Console.WriteLine($"Total balance (SEK): {totalSek:N2}");
+            TableFormatter.DisplayAccountsTable(user.Accounts, "MY ACCOUNTS");
 
             var back = ConsoleHelper.PromptWithEscape("Press ENTER or ESC to go back");
             if (back == "<ESC>" || string.IsNullOrWhiteSpace(back))
@@ -69,8 +53,9 @@ namespace bank.Services
             ConsoleHelper.ClearScreen();
             ConsoleHelper.WriteHeader("CREATE ACCOUNT");
 
-            Console.WriteLine("1. Savings");
-            Console.WriteLine("2. Checking");
+            ConsoleHelper.WriteMenuOption("1", "Savings Account");
+            ConsoleHelper.WriteMenuOption("2", "Checking Account");
+            Console.WriteLine();
 
             var choice = ConsoleHelper.PromptWithEscape("Choose option");
             if (choice == "<ESC>" || string.IsNullOrWhiteSpace(choice))
@@ -100,11 +85,14 @@ namespace bank.Services
             if (account == null)
                 return;
 
-            Console.Write($"Amount ({account.Currency}): ");
-            if (!decimal.TryParse(Console.ReadLine(), out var amount) || amount <= 0)
+            var amountInput = ConsoleHelper.PromptWithEscape($"Amount ({account.Currency})");
+            if (amountInput == "<ESC>")
+                return;
+
+            if (!decimal.TryParse(amountInput, out var amount) || amount <= 0)
             {
                 ConsoleHelper.WriteError("Invalid amount.");
-                Console.ReadKey();
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
@@ -145,17 +133,20 @@ namespace bank.Services
             if (account == null)
                 return;
 
-            Console.Write($"Amount ({account.Currency}): ");
-            if (!decimal.TryParse(Console.ReadLine(), out var amount) || amount <= 0)
+            var amountInput = ConsoleHelper.PromptWithEscape($"Amount ({account.Currency})");
+            if (amountInput == "<ESC>")
+                return;
+
+            if (!decimal.TryParse(amountInput, out var amount) || amount <= 0)
             {
                 ConsoleHelper.WriteError("Invalid amount.");
-                Console.ReadKey();
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
             if (!CanWithdraw(account, amount))
             {
-                Console.ReadKey();
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
@@ -224,13 +215,15 @@ namespace bank.Services
                 return acc;
             }
 
-            Console.WriteLine("Select account:");
+            ConsoleHelper.WriteInfo("Select account:");
+            Console.WriteLine();
 
             for (int i = 0; i < user.Accounts.Count; i++)
             {
                 var acc = user.Accounts[i];
-                Console.WriteLine($"{i + 1}. {acc.AccountNumber} - {acc.Balance} {acc.Currency}");
+                ConsoleHelper.WriteMenuOption($"{i + 1}", $"{acc.AccountNumber} - {acc.Balance:N2} {acc.Currency}");
             }
+            Console.WriteLine();
 
             var choice = ConsoleHelper.PromptWithEscape("Choose");
             if (choice == "<ESC>" || string.IsNullOrWhiteSpace(choice))
