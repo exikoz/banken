@@ -25,6 +25,8 @@ namespace bank.Core
         public string? ToAccount { get; set; }      // For transfers
         public string? FromUser { get; set; }       // For transfers
         public string? ToUser { get; set; }         // For transfers
+        public decimal ConvertedAmount { get; set; }      // For currency-converted internal transfers
+        public string TargetCurrency { get; set; } = "";   // For converted currency display
 
         // Pending transfer support
         public bool IsPending { get; set; }         // Marks if transaction is pending
@@ -51,9 +53,9 @@ namespace bank.Core
             Amount = amount;
 
             // Default pending values for standard transactions
-            IsPending = true;
-            Status = "Pending";
-            ReleaseAt = ProcessDuration;
+            IsPending = false;
+            Status = "Completed";
+            ReleaseAt = null;
         }
 
 

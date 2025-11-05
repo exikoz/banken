@@ -42,7 +42,8 @@ namespace bank.Core
 
         public bool ValidatePIN(string pin) => PIN == pin;
 
-        public bool IsAdmin() => Role == UserRole.Admin;
+        public bool IsAdmin
+            () => Role == UserRole.Admin;
 
 
     }
