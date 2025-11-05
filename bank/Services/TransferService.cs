@@ -1,8 +1,9 @@
-using System;
-using System.Linq;
-using System.Threading;
 using bank.Core;
 using bank.Utils;
+using System;
+using System.Linq;
+using System.Security.Principal;
+using System.Threading;
 
 namespace bank.Services
 {
@@ -56,6 +57,18 @@ namespace bank.Services
                 return;
             }
 
+            var lockedAccounts = currentUser.Accounts
+            .Where(a => !a.canTransfer)
+            .ToList();
+
+            if(lockedAccounts.Any())
+            {
+                ConsoleHelper.WriteWarning("Transfers still pending. Please wait until they are processed.");
+                ConsoleHelper.PauseWithMessage();
+                return;
+            }
+
+
             Console.WriteLine("Select source account:\n");
             for (int i = 0; i < sourceAccounts.Count; i++)
                 Console.WriteLine($"{i + 1}. {sourceAccounts[i].AccountNumber} | {sourceAccounts[i].Balance:N2} {sourceAccounts[i].Currency}");
@@ -66,6 +79,8 @@ namespace bank.Services
                 return;
 
             var fromAcc = sourceAccounts[srcChoice - 1];
+
+            
 
             var destList = currentUser.Accounts
                 .Where(a => a != fromAcc)
@@ -174,7 +189,26 @@ namespace bank.Services
             ConsoleHelper.WriteInfo($"Amount: {amount:N2} {fromAcc.Currency}");
             ConsoleHelper.WriteInfo($"Release at: {releaseTime:HH:mm:ss}");
 
-            ConsoleHelper.PauseWithMessage();
+            fromAcc.canTransfer = false;
+
+            Thread backgroundThread = new Thread(() =>
+            {
+                try
+                {
+                    var delay = releaseTime - DateTime.UtcNow;
+                    Thread.Sleep(delay);
+
+                }
+                finally
+                {
+                    fromAcc.canTransfer = true;
+                }
+            });
+            backgroundThread.IsBackground = true;
+            backgroundThread.Start();
+
+            Console.WriteLine("\nPress any key to continue...");
+            Console.ReadKey();
         }
 
 
@@ -191,6 +225,16 @@ namespace bank.Services
             if (!accounts.Any())
             {
                 ConsoleHelper.WriteWarning("No available accounts.");
+                ConsoleHelper.PauseWithMessage();
+                return;
+            }
+            var lockedAccounts = sender.Accounts
+            .Where(a => !a.canTransfer)
+            .ToList();
+
+            if (lockedAccounts.Any())
+            {
+                ConsoleHelper.WriteWarning("Transfers still pending. Please wait until they are processed.");
                 ConsoleHelper.PauseWithMessage();
                 return;
             }
@@ -290,6 +334,9 @@ namespace bank.Services
 
             fromAcc.Transactions.Add(tx);
 
+            var releaseAt = tx.ReleaseAt;
+
+
             Console.Clear();
             ConsoleHelper.WriteHeader("TRANSFER CREATED");
 
@@ -297,6 +344,22 @@ namespace bank.Services
             ConsoleHelper.WriteSuccess("Status: Pending (3 minutes)");
             ConsoleHelper.WriteSuccess($"Transaction ID: {tx.Id}");
             ConsoleHelper.WriteSuccess($"Your new balance: {fromAcc.Balance:N2} {fromAcc.Currency}");
+            fromAcc.canTransfer = false;
+
+
+            Thread backgroundThread = new Thread(() =>
+            {
+                try
+                {
+                    Thread.Sleep(TimeSpan.FromMinutes(3));
+                }
+                finally
+                {
+                    fromAcc.canTransfer = true;
+                }
+            });
+            backgroundThread.IsBackground = true;
+            backgroundThread.Start();
 
             ConsoleHelper.PauseWithMessage();
         }
