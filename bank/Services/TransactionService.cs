@@ -21,12 +21,24 @@ namespace bank.Services
 
         public void ShowTransactionLog(User currentUser)
         {
+            Console.Clear();
+            ConsoleHelper.WriteHeader("TRANSACTION LOG");
 
+            // Run pending processing before showing
+            bank.ProcessPendingTransfers();
 
-            // Hämta alla transaktioner från användarens konton
+            // Get all transactions for all accounts owned by the user
             var allTransactions = currentUser.Accounts
                 .SelectMany(a => a.Transactions
                     .Select(t => new { Account = a, Transaction = t }))
+                .Where(x =>
+                    // Normal transactions (Deposit, Withdraw, External Transfer)
+                    !x.Transaction.IsInternal ||
+
+                    // For internal transfers, show ONLY the "withdraw" side
+                    (x.Transaction.IsInternal &&
+                     x.Transaction.FromAccount == x.Transaction.AccountNumber)
+                )
                 .OrderByDescending(x => x.Transaction.TimeStamp)
                 .ToList();
 
@@ -51,11 +63,16 @@ namespace bank.Services
 
             if (!ValidationHelper.IsValid(allTransactions))
             {
-                Console.WriteLine("\nPress any key to return to menu...");
-                Console.ReadKey();
+                ConsoleHelper.WriteWarning("No transactions found.");
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
+            // Header
+            Console.WriteLine(
+                $"{"Date",-22} | {"Type",-10} | {"Amount",-12} | {"Currency",-8} | {"From",-25} | {"To",-25} | {"Status",-15} | {"ID",-10}"
+            );
+            Console.WriteLine(new string('-', 150));
 
 
 
@@ -80,47 +97,44 @@ namespace bank.Services
                 {
                     var t = item.Transaction;
 
-                    // Om FromUser inte är satt, visa "Internal"
-                    string fromDisplay = !string.IsNullOrWhiteSpace(t.FromUser)
-                        ? $"{t.FromUser} ({t.FromAccount})"
-                        : "Internal";
+                // From formatting
+                string fromDisplay =
+                    t.FromAccount == "0000" ? "ATM" :
+                    $"{t.FromUser} ({t.FromAccount})";
 
-                    // Om ToUser inte är satt, visa "Internal"
-                    string toDisplay = !string.IsNullOrWhiteSpace(t.ToUser)
-                        ? $"{t.ToUser} ({t.ToAccount})"
-                        : "Internal";
+                // To formatting
+                string toDisplay =
+                    t.ToAccount == "0000" ? "ATM" :
+                    $"{t.ToUser} ({t.ToAccount})";
 
-                    if (!t.IsProcessed)
-                    {
-                        ConsoleHelper.WriteHighlight(
-                            $"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} | {t.Type,-10} | {t.Amount,-12:F2} | {t.Currency,-8} | " +
-                            $"{fromDisplay,-25} | {toDisplay,-25} | Processing: {t.ProcessDuration}"
-                        );
-                        Console.WriteLine();
-                    }
-                    else
-                    {
-                        ConsoleHelper.WriteSuccess($"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} \n | {t.Type,-10} | {t.Amount,-12:F2} | {t.Currency,-8} | {fromDisplay,-25} | {toDisplay,-25} | Completed: {t.ProcessDuration}");
-                    }
-
-                }
-                Console.WriteLine(new string('-', 120));
-
-
-
-                key = Console.ReadKey(true);
-                if (key.Key == ConsoleKey.LeftArrow)
+                // Status formatting
+                string status;
+                if (t.IsPending && t.ReleaseAt.HasValue)
                 {
-                    x = (x - 1 + filters.Count) % filters.Count;
+                    int minutesLeft = (int)(t.ReleaseAt.Value - DateTime.UtcNow).TotalMinutes;
+                    if (minutesLeft < 0) minutesLeft = 0;
+                    status = $"Pending ({minutesLeft} min)";
+                }
+                else
+                {
+                    status = "Completed";
                 }
 
-                if (key.Key == ConsoleKey.RightArrow)
-                {
-                    x = (x + 1) % filters.Count;
-                }
+                Console.WriteLine(
+                    $"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} | " +
+                    $"{t.Type,-10} | " +
+                    $"{t.Amount,-12:N2} | " +
+                    $"{t.Currency,-8} | " +
+                    $"{fromDisplay,-25} | " +
+                    $"{toDisplay,-25} | " +
+                    $"{status,-15} | " +
+                    $"{t.Id,-10}"
+                );
             }
             while (key.Key != ConsoleKey.Escape);
 
+            Console.WriteLine(new string('-', 150));
+            ConsoleHelper.PauseWithMessage();
         }
 
     }

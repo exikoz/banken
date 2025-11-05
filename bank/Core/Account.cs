@@ -21,16 +21,35 @@ namespace bank.Core
             Balance = 0;
         }
 
-        // Deposit logic only, no UI
+        // Deposit logic with transaction logging
         public virtual void Deposit(decimal amount)
         {
             if (amount <= 0)
                 return;
 
             Balance += amount;
+
+            var tx = new Transaction(
+                id: Bank.GenerateTransactionId(),
+                accountNumber: AccountNumber,
+                timeStamp: DateTime.UtcNow,
+                type: "Deposit",
+                amount: amount,
+                currency: Currency,
+                accountType: AccountType,
+                fromAccount: "0000",
+                toAccount: AccountNumber,
+                fromUser: "ATM",
+                toUser: Owner.Name
+            );
+
+            tx.IsPending = false;
+            tx.Status = "Completed";
+
+            Transactions.Add(tx);
         }
 
-        // Withdraw logic only, no UI
+        // Withdraw logic with transaction logging
         public virtual void Withdraw(decimal amount)
         {
             if (amount <= 0)
@@ -40,6 +59,25 @@ namespace bank.Core
                 return;
 
             Balance -= amount;
+
+            var tx = new Transaction(
+                id: Bank.GenerateTransactionId(),
+                accountNumber: AccountNumber,
+                timeStamp: DateTime.UtcNow,
+                type: "Withdraw",
+                amount: amount,
+                currency: Currency,
+                accountType: AccountType,
+                fromAccount: AccountNumber,
+                toAccount: "0000",
+                fromUser: Owner.Name,
+                toUser: "ATM"
+            );
+
+            tx.IsPending = false;
+            tx.Status = "Completed";
+
+            Transactions.Add(tx);
         }
     }
 }

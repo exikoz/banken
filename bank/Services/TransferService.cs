@@ -24,10 +24,7 @@ namespace bank.Services
             {
                 Console.Write("Enter PIN: ");
                 var pin = Console.ReadLine();
-
-                if (pin == user.PIN)
-                    return true;
-
+                if (pin == user.PIN) return true;
                 ConsoleHelper.WriteWarning("Incorrect PIN.");
             }
 
@@ -35,13 +32,24 @@ namespace bank.Services
             return false;
         }
 
+        private bool ApplyWithdrawal(Account from, decimal amount, out decimal fee, out string type)
+        {
+            fee = 0;
+            type = "Standard";
+            return from.Balance >= amount;
+        }
+
+        // INTERNAL TRANSFER
         public void DoTransferOwn(User currentUser)
         {
             Console.Clear();
             ConsoleHelper.WriteHeader("TRANSFER BETWEEN OWN ACCOUNTS");
 
-            var accounts = currentUser.Accounts.ToList();
-            if (!accounts.Any(a => a.Balance > 0))
+            var sourceAccounts = currentUser.Accounts
+                .Where(a => a.Balance > 0)
+                .ToList();
+
+            if (!sourceAccounts.Any())
             {
                 ConsoleHelper.WriteWarning("No accounts with balance available.");
                 ConsoleHelper.PauseWithMessage();
@@ -49,23 +57,27 @@ namespace bank.Services
             }
 
             Console.WriteLine("Select source account:\n");
-            for (int i = 0; i < accounts.Count; i++)
-                Console.WriteLine($"{i + 1}. {accounts[i].AccountNumber} | {accounts[i].Balance:N2} {accounts[i].Currency}");
+            for (int i = 0; i < sourceAccounts.Count; i++)
+                Console.WriteLine($"{i + 1}. {sourceAccounts[i].AccountNumber} | {sourceAccounts[i].Balance:N2} {sourceAccounts[i].Currency}");
 
             Console.Write("\nChoose: ");
-            if (!int.TryParse(Console.ReadLine(), out int srcChoice) || srcChoice < 1 || srcChoice > accounts.Count)
+            if (!int.TryParse(Console.ReadLine(), out int srcChoice) ||
+                srcChoice < 1 || srcChoice > sourceAccounts.Count)
                 return;
 
-            var fromAcc = accounts[srcChoice - 1];
+            var fromAcc = sourceAccounts[srcChoice - 1];
+
+            var destList = currentUser.Accounts
+                .Where(a => a != fromAcc)
+                .ToList();
 
             Console.WriteLine("\nSELECT DESTINATION ACCOUNT\n");
-
-            var destList = accounts.Where(a => a != fromAcc).ToList();
             for (int i = 0; i < destList.Count; i++)
                 Console.WriteLine($"{i + 1}. {destList[i].AccountNumber} | {destList[i].Balance:N2} {destList[i].Currency}");
 
             Console.Write("\nChoose: ");
-            if (!int.TryParse(Console.ReadLine(), out int dstChoice) || dstChoice < 1 || dstChoice > destList.Count)
+            if (!int.TryParse(Console.ReadLine(), out int dstChoice) ||
+                dstChoice < 1 || dstChoice > destList.Count)
                 return;
 
             var toAcc = destList[dstChoice - 1];
@@ -73,25 +85,44 @@ namespace bank.Services
             Console.Clear();
             ConsoleHelper.WriteHeader("ENTER AMOUNT");
 
-            Console.Write($"Enter Amount ({fromAcc.Currency}): ");
-            if (!decimal.TryParse(Console.ReadLine(), out decimal amount) || amount <= 0)
+            decimal amount = 0;
+            int amountAttempts = 0;
+
+            while (amountAttempts < 2)
+            {
+                Console.Write($"Enter Amount ({fromAcc.Currency}): ");
+                if (decimal.TryParse(Console.ReadLine(), out amount) && amount > 0)
+                {
+                    if (amount <= fromAcc.Balance)
+                        break;
+
+                    ConsoleHelper.WriteError("Amount exceeds available balance.");
+                }
+                else
+                {
+                    ConsoleHelper.WriteError("Invalid amount.");
+                }
+
+                amountAttempts++;
+            }
+
+            if (amountAttempts == 2)
+            {
+                ConsoleHelper.WriteError("Too many failed attempts.");
+                ConsoleHelper.PauseWithMessage();
                 return;
+            }
 
             Console.Clear();
             ConsoleHelper.WriteHeader("ENTER PIN TO CONFIRM TRANSFER");
+            if (!ValidatePin(currentUser)) return;
 
-            if (!ValidatePin(currentUser))
-                return;
-
-            if (!accountService.CanWithdraw(fromAcc, amount))
+            if (!ApplyWithdrawal(fromAcc, amount, out decimal fee, out string _))
             {
                 ConsoleHelper.WriteError("Insufficient coverage.");
                 ConsoleHelper.PauseWithMessage();
                 return;
             }
-
-            ConsoleHelper.WriteInfo("Transaction will be completed in 15 minutes.");
-            Thread.Sleep(TimeSpan.FromMinutes(15));
 
             decimal converted = amount;
             bool sameCurrency = fromAcc.Currency == toAcc.Currency;
@@ -99,17 +130,51 @@ namespace bank.Services
             if (!sameCurrency)
                 converted = exchangeRateService.ConvertCurrency(amount, fromAcc.Currency, toAcc.Currency);
 
-            decimal before = fromAcc.Balance;
-            fromAcc.Withdraw(amount);
+            fromAcc.Balance -= amount + fee;
+            toAcc.Balance += converted;
 
-            if (fromAcc.Balance == before)
+            string txId = Bank.GenerateTransactionId();
+
+            var withdrawTx = new Transaction(
+                id: txId,
+                accountNumber: fromAcc.AccountNumber,
+                timeStamp: DateTime.UtcNow,
+                type: "Transfer",
+                amount: amount,
+                currency: fromAcc.Currency,
+                accountType: fromAcc.AccountType,
+                fromAccount: fromAcc.AccountNumber,
+                toAccount: toAcc.AccountNumber,
+                fromUser: currentUser.Name,
+                toUser: currentUser.Name
+            )
             {
-                ConsoleHelper.WriteError("Transfer failed.");
-                ConsoleHelper.PauseWithMessage();
-                return;
-            }
+                IsPending = false,
+                Status = "Completed",
+                IsInternal = true
+            };
 
-            toAcc.Deposit(converted);
+            var depositTx = new Transaction(
+                id: txId,
+                accountNumber: toAcc.AccountNumber,
+                timeStamp: DateTime.UtcNow,
+                type: "Transfer",
+                amount: sameCurrency ? amount : converted,
+                currency: toAcc.Currency,
+                accountType: toAcc.AccountType,
+                fromAccount: fromAcc.AccountNumber,
+                toAccount: toAcc.AccountNumber,
+                fromUser: currentUser.Name,
+                toUser: currentUser.Name
+            )
+            {
+                IsPending = false,
+                Status = "Completed",
+                IsInternal = true
+            };
+
+            fromAcc.Transactions.Add(withdrawTx);
+            toAcc.Transactions.Add(depositTx);
 
             Console.Clear();
             ConsoleHelper.WriteHeader("TRANSFER COMPLETED");
@@ -119,18 +184,23 @@ namespace bank.Services
                 : $"{amount:N2} {fromAcc.Currency} → {converted:N2} {toAcc.Currency}";
 
             ConsoleHelper.WriteSuccess($"Transfer completed: {display}");
+            ConsoleHelper.WriteSuccess($"Transaction ID: {txId}");
             ConsoleHelper.WriteSuccess($"Sender balance: {fromAcc.Balance:N2} {fromAcc.Currency}");
             ConsoleHelper.WriteSuccess($"Receiver balance: {toAcc.Balance:N2} {toAcc.Currency}");
 
             ConsoleHelper.PauseWithMessage();
         }
 
+        // EXTERNAL TRANSFER
         public void TransferToOther(User sender)
         {
             Console.Clear();
             ConsoleHelper.WriteHeader("TRANSFER TO ANOTHER CUSTOMER");
 
-            var accounts = sender.Accounts.Where(a => a.Balance > 0).ToList();
+            var accounts = sender.Accounts
+                .Where(a => a.Balance > 0)
+                .ToList();
+
             if (!accounts.Any())
             {
                 ConsoleHelper.WriteWarning("No available accounts.");
@@ -142,12 +212,12 @@ namespace bank.Services
                 Console.WriteLine($"{i + 1}. {accounts[i].AccountNumber} | {accounts[i].Balance:N2} {accounts[i].Currency}");
 
             Console.Write("\nChoose account: ");
-            if (!int.TryParse(Console.ReadLine(), out int choice) || choice < 1 || choice > accounts.Count)
+            if (!int.TryParse(Console.ReadLine(), out int choice) ||
+                choice < 1 || choice > accounts.Count)
                 return;
 
             var fromAcc = accounts[choice - 1];
 
-            Console.WriteLine("\nRECIPIENT ACCOUNT\n");
             Console.Write("Enter recipient account number: ");
             var toNumber = Console.ReadLine()?.Trim();
 
@@ -162,17 +232,37 @@ namespace bank.Services
 
             ConsoleHelper.WriteInfo($"Recipient: {toAcc.Owner.Name}");
 
-            Console.WriteLine("\nENTER AMOUNT");
-            Console.Write($"Enter Amount ({fromAcc.Currency}): ");
+            decimal amount = 0;
+            int amountAttempts = 0;
 
-            if (!decimal.TryParse(Console.ReadLine(), out decimal amount) || amount <= 0)
+            while (amountAttempts < 2)
+            {
+                Console.Write($"Enter Amount ({fromAcc.Currency}): ");
+                if (decimal.TryParse(Console.ReadLine(), out amount) && amount > 0)
+                {
+                    if (amount <= fromAcc.Balance)
+                        break;
+
+                    ConsoleHelper.WriteError("Amount exceeds available balance.");
+                }
+                else
+                {
+                    ConsoleHelper.WriteError("Invalid amount.");
+                }
+
+                amountAttempts++;
+            }
+
+            if (amountAttempts == 2)
+            {
+                ConsoleHelper.WriteError("Too many failed attempts.");
+                ConsoleHelper.PauseWithMessage();
                 return;
+            }
 
             Console.Clear();
             ConsoleHelper.WriteHeader("ENTER PIN TO CONFIRM TRANSFER");
-
-            if (!ValidatePin(sender))
-                return;
+            if (!ValidatePin(sender)) return;
 
             if (!accountService.CanWithdraw(fromAcc, amount))
             {
@@ -181,37 +271,44 @@ namespace bank.Services
                 return;
             }
 
-            ConsoleHelper.WriteInfo("Transaction will be completed in 15 minutes.");
-            Thread.Sleep(TimeSpan.FromMinutes(15));
-
             decimal converted = amount;
             bool sameCurrency = fromAcc.Currency == toAcc.Currency;
 
             if (!sameCurrency)
                 converted = exchangeRateService.ConvertCurrency(amount, fromAcc.Currency, toAcc.Currency);
 
-            decimal before = fromAcc.Balance;
-            fromAcc.Withdraw(amount);
+            fromAcc.Balance -= amount;
 
-            if (fromAcc.Balance == before)
+            string transactionId = Bank.GenerateTransactionId();
+
+            var tx = new Transaction(
+                id: transactionId,
+                accountNumber: fromAcc.AccountNumber,
+                timeStamp: DateTime.UtcNow,
+                type: "Transfer",
+                amount: amount,
+                currency: fromAcc.Currency,
+                accountType: fromAcc.AccountType,
+                fromAccount: fromAcc.AccountNumber,
+                toAccount: toAcc.AccountNumber,
+                fromUser: sender.Name,
+                toUser: toAcc.Owner.Name
+            )
             {
-                ConsoleHelper.WriteError("Transfer failed.");
-                ConsoleHelper.PauseWithMessage();
-                return;
-            }
+                IsPending = true,
+                Status = "Pending",
+                ReleaseAt = DateTime.UtcNow.AddMinutes(3),
+                IsInternal = false
+            };
 
-            toAcc.Deposit(converted);
+            fromAcc.Transactions.Add(tx);
 
             Console.Clear();
-            ConsoleHelper.WriteHeader("TRANSFER COMPLETED");
+            ConsoleHelper.WriteHeader("TRANSFER CREATED");
 
-            string display = sameCurrency
-                ? $"{amount:N2} {fromAcc.Currency}"
-                : $"{amount:N2} {fromAcc.Currency} → {converted:N2} {toAcc.Currency}";
-
-            ConsoleHelper.WriteSuccess($"Transfer completed: {display}");
-            ConsoleHelper.WriteSuccess($"Sent from: {fromAcc.AccountNumber}");
-            ConsoleHelper.WriteSuccess($"Received by: {toAcc.Owner.Name} ({toAcc.AccountNumber})");
+            ConsoleHelper.WriteSuccess($"Transfer created: {amount:N2} {fromAcc.Currency}");
+            ConsoleHelper.WriteSuccess("Status: Pending (3 minutes)");
+            ConsoleHelper.WriteSuccess($"Transaction ID: {tx.Id}");
             ConsoleHelper.WriteSuccess($"Your new balance: {fromAcc.Balance:N2} {fromAcc.Currency}");
 
             ConsoleHelper.PauseWithMessage();

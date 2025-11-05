@@ -44,8 +44,7 @@ namespace bank.Services
 
             if (user.isBlocked)
             {
-                ConsoleHelper.WriteError("Account is locked");
-                ConsoleHelper.PauseWithMessage();
+                ShowBlockedScreen(user);
                 return null;
             }
 
@@ -185,5 +184,31 @@ namespace bank.Services
 
             return pin;
         }
+
+        private void ShowBlockedScreen(User user)
+        {
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("ACCOUNT LOCKED");
+
+            ConsoleHelper.WriteBox($"User: {user.Name}", ConsoleColor.Cyan);
+
+            Console.WriteLine();
+            ConsoleHelper.WriteWarning("Your account has been temporarily locked");
+            ConsoleHelper.WriteInfo("This is a security measure after several incorrect PIN attempts.");
+
+            Console.WriteLine();
+            ConsoleHelper.WriteHighlight("To unlock your account, please contact support:", ConsoleColor.Yellow);
+
+            Console.WriteLine();
+            Console.WriteLine("• Phone: 0200 112 233");
+            Console.WriteLine("• Email: support@yourbank.se");
+            Console.WriteLine("• Opening hours: Mon–Fri 08:00–18:00");
+
+            Console.WriteLine();
+            ConsoleHelper.WriteWarning("For your protection, no online actions are available during lockout.");
+
+            ConsoleHelper.PauseWithMessage();
+        }
+
     }
 }
