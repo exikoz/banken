@@ -51,9 +51,9 @@ namespace bank.Core
             Amount = amount;
 
             // Default pending values for standard transactions
-            IsPending = false;
-            Status = "Completed";
-            ReleaseAt = null;
+            IsPending = true;
+            Status = "Pending";
+            ReleaseAt = ProcessDuration;
         }
 
 

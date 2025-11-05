@@ -65,17 +65,20 @@ namespace bank.Services
                     $"{t.ToUser} ({t.ToAccount})";
 
                 // Status formatting
+
+               /*
                 string status;
                 if (t.IsPending && t.ReleaseAt.HasValue)
                 {
                     int minutesLeft = (int)(t.ReleaseAt.Value - DateTime.UtcNow).TotalMinutes;
                     if (minutesLeft < 0) minutesLeft = 0;
-                    status = $"Pending ({minutesLeft} min)";
+                    status = $"({t.Status}) ({minutesLeft} min)";
                 }
                 else
                 {
                     status = "Completed";
                 }
+               */
 
                 Console.WriteLine(
                     $"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} | " +
@@ -84,7 +87,7 @@ namespace bank.Services
                     $"{t.Currency,-8} | " +
                     $"{fromDisplay,-25} | " +
                     $"{toDisplay,-25} | " +
-                    $"{status,-15} | " +
+                    $"{t.Status,-15} | " +
                     $"{t.Id,-10}"
                 );
             }
