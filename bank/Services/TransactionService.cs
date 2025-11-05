@@ -1,9 +1,7 @@
 ﻿using bank.Core;
 using bank.Utils;
 using System;
-using System.Drawing;
 using System.Linq;
-using System.Security.Principal;
 
 namespace bank.Services
 {
@@ -16,9 +14,6 @@ namespace bank.Services
             this.bank = bank;
         }
 
-
-
-
         public void ShowTransactionLog(User currentUser)
         {
             Console.Clear();
@@ -27,7 +22,7 @@ namespace bank.Services
             // Run pending processing before showing
             bank.ProcessPendingTransfers();
 
-            // Fetches all user transactions 
+            // Get all transactions for all accounts owned by the user
             var allTransactions = currentUser.Accounts
                 .SelectMany(a => a.Transactions
                     .Select(t => new { Account = a, Transaction = t }))
@@ -42,34 +37,7 @@ namespace bank.Services
                 .OrderByDescending(x => x.Transaction.TimeStamp)
                 .ToList();
 
-
-            /* Afterwards I divide the list into smaller lists holding the filtered content. 
-             */
-            var processingTransactions = allTransactions.Where(x => !x.Transaction.IsProcessed).ToList();
-            var completedTransactions = allTransactions.Where(x => x.Transaction.IsProcessed).ToList();
-            var deposits = allTransactions.Where(x => x.Transaction.Type == "Deposit");
-            var withdrawals = allTransactions.Where(x => x.Transaction.Type == "Withdraw");
-
-
-            //Then I use this dynamic array to hold the lists. It holds all transactions by default
-            IEnumerable<dynamic> TransactionToShow = allTransactions;
-
-
-            /* I place all the transactions with their Title in one list, 
-               This represents the possible navigations available. 
-               We also need this for our "arrow" logic. 
-            */
-            var filters = new List<(string Name, IEnumerable<dynamic> Data)>
-            {
-                ("All", allTransactions),
-                ("Processing", processingTransactions),
-                ("Completed", completedTransactions),
-                ("Withdrawals", withdrawals),
-                ("Deposits", deposits),
-
-            };
-
-            if (!ValidationHelper.IsValid(allTransactions))
+            if (!allTransactions.Any())
             {
                 ConsoleHelper.WriteWarning("No transactions found.");
                 ConsoleHelper.PauseWithMessage();
@@ -82,64 +50,19 @@ namespace bank.Services
             );
             Console.WriteLine(new string('-', 150));
 
-
-
-
-            // represents the position in console, default first object in filters when init
-            int x = 1;
-
-            ConsoleKeyInfo key;
-            do
+            foreach (var item in allTransactions)
             {
-                Console.Clear();
-                Console.WriteLine("=== TRANSACTION LOG ===\n");
-                Console.WriteLine("(<-) Press left/right arrows to sort by columns (->)");
-                Console.WriteLine(new string('-', Console.WindowWidth -1));
-                Console.WriteLine($"{"Date sent",-22} | {"Type",-10} | {"Amount",-12} | {"Currency",-8} | {"From",-25} | {"To",-15} | {"Status",-15}");
-                Console.WriteLine(new string('-', Console.WindowWidth -1));
+                var t = item.Transaction;
 
-                Console.WriteLine($"Currently viewing: {filters[x].Name}");
+                // From formatting
+                string fromDisplay =
+                    t.FromAccount == "0000" ? "ATM" :
+                    $"{t.FromUser} ({t.FromAccount})";
 
-
-                // The actual iteration and printing of the table, this is reprinted when list view is changed
-
-                foreach (var item in filters[x].Data)
-                {
-                    var t = item.Transaction;
-
-                    // If FromUser isn't defiened , show "Internal"
-                    string fromDisplay = !string.IsNullOrWhiteSpace(t.FromUser)
-                        ? $"{t.FromUser} ({t.FromAccount})"
-                        : "Internal";
-
-                    // If FromUser isn't defiened , show "Internal"
-                    string toDisplay = !string.IsNullOrWhiteSpace(t.ToUser)
-                        ? $"{t.ToUser} ({t.ToAccount})"
-                        : "Internal";
-
-                    if (!t.IsProcessed)
-                    {
-                        ConsoleHelper.WriteHighlight(
-                            $"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} | {t.Type,-10} | {t.Amount,-12:F2} | {t.Currency,-8} | " +
-                            $"{fromDisplay,-25} | {toDisplay,-25} | Processing: {t.ProcessDuration}"
-                        );
-                        Console.WriteLine();
-                    }
-                    else
-                    {
-                        ConsoleHelper.WriteSuccess($"{t.TimeStamp:yyyy-MM-dd HH:mm:ss} \n | {t.Type,-10} | {t.Amount,-12:F2} | {t.Currency,-8} | {fromDisplay,-25} | {toDisplay,-25} | Completed: {t.ProcessDuration}");
-                    }
-
-                }
-                Console.WriteLine(new string('-', 120));
-
-
-                /* here we read key input, and either go left(-) or right(+) 
-                // I use modolus to stay within bounds. Our list is at this moment
-                // at 5 indices (0,1,2,3,4), so if we try and head over to 5 then: 
-                // (4+1) % 5 = 0
-                */
-
+                // To formatting
+                string toDisplay =
+                    t.ToAccount == "0000" ? "ATM" :
+                    $"{t.ToUser} ({t.ToAccount})";
 
                 // Status formatting
                 string status;
@@ -165,11 +88,9 @@ namespace bank.Services
                     $"{t.Id,-10}"
                 );
             }
-            while (key.Key != ConsoleKey.Escape);
 
             Console.WriteLine(new string('-', 150));
             ConsoleHelper.PauseWithMessage();
         }
-
     }
 }
