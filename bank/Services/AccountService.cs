@@ -1,17 +1,14 @@
 ﻿using bank.Core;
+using bank.Utils;
 using System;
 using System.Linq;
 
 namespace bank.Services
 {
-    /// <summary>
-    /// Handles all account-related operations (create, view, deposit, withdraw)
-    /// </summary>
     public class AccountService
     {
         private readonly Bank bank;
         private readonly ExchangerateService exchangerateService;
-
 
         public AccountService(Bank bank)
         {
@@ -19,122 +16,112 @@ namespace bank.Services
             this.exchangerateService = new ExchangerateService();
         }
 
-        /// <summary>
-        /// Displays all accounts for the current user
-        /// </summary>
-        public void ShowAccounts(User currentUser)
+        // Shows all accounts for a user
+        public void ShowAccounts(User user)
         {
-            Console.Clear();
-            Console.WriteLine("=== MY ACCOUNTS ===\n");
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("MY ACCOUNTS");
 
-            if (!currentUser.Accounts.Any())
+            if (!user.Accounts.Any())
             {
-                Console.WriteLine("You do not have any accounts yet.");
-                Console.Write("\nWould you like to open one? (Yes/No): ");
+                ConsoleHelper.WriteWarning("You have no accounts.");
+                var answer = ConsoleHelper.PromptWithEscape("Open a new account? (yes/no)");
 
-                string? answer = Console.ReadLine()?.Trim().ToLower();
+                if (answer == "<ESC>" || string.IsNullOrWhiteSpace(answer))
+                    return;
 
-                if (answer == "y" || answer == "yes")
+                answer = answer.ToLower();
+
+                if (answer == "yes" || answer == "y")
                 {
-                    CreateAccount(currentUser);
+                    CreateAccount(user);
                     return;
                 }
-                else if (answer == "n" || answer == "no")
-                {
-                    Console.WriteLine("\nReturning to main menu...");
-                    Console.ReadKey();
-                    return;
-                }
-                else
-                {
-                    Console.WriteLine("\nInvalid choice. Please type Yes or No.");
-                    Console.ReadKey();
-                    return;
-                }
-            }
-            else
-            {
-                foreach (var account in currentUser.Accounts)
-                {
-                    string accountType = account is CheckingAccount ? "Checking Account" :
-                                         account is SavingsAccount ? "Savings Account" :
-                                         "Unknown Type";
 
-                    //Show Available incl. overdraft up to 1,000 for both types
-                    decimal overdraft = 1000m;
-                    decimal available = account.Balance + overdraft; 
-
-                    Console.WriteLine($"Account: {account.AccountNumber} ({accountType})");
-                    Console.WriteLine($"Balance: {account.Balance} {account.Currency}");
-                    Console.WriteLine("─────────────────────");
-                }
-            }
-
-            // Calculate and display total balance in SEK
-            decimal totalInSek = 0;
-            foreach (var acc in currentUser.Accounts)
-            {
-                totalInSek += exchangerateService.ConvertToSek(acc.Currency, acc.Balance);
-            }
-            Console.WriteLine($"\nTotal balance (in SEK): {totalInSek:N2} SEK");
-
-
-            Console.WriteLine("\nPress any key to continue...");
-            Console.ReadKey();
-        }
-
-        // Create new account
-        public void CreateAccount(User currentUser)
-        {
-            Console.Clear();
-            Console.WriteLine("=== CREATE NEW ACCOUNT ===\n");
-
-            Console.WriteLine("\nSelect account type:");
-            Console.WriteLine("1. Savings Account");
-            Console.WriteLine("2. Checking Account");
-            Console.Write("\nChoose option: ");
-            var choice = Console.ReadLine();
-
-            if (choice != "1" && choice != "2")
-            {
-                Console.WriteLine("\n✗ Invalid choice. Account not created.");
-                Console.ReadKey();
                 return;
             }
 
-            string accountType = choice == "1" ? "savings" : "checking";
+            foreach (var acc in user.Accounts)
+            {
+                var type = acc is CheckingAccount ? "Checking" :
+                           acc is SavingsAccount ? "Savings" : "Account";
 
-            var newAccount = bank.OpenAccount(currentUser, accountType);
+                Console.WriteLine($"{acc.AccountNumber} - {type}");
+                Console.WriteLine($"Balance: {acc.Balance} {acc.Currency}");
+                Console.WriteLine();
+            }
 
-            Console.WriteLine("\nPress any key to continue...");
-            Console.ReadKey();
+            decimal totalSek = 0;
+            foreach (var acc in user.Accounts)
+                totalSek += exchangerateService.ConvertToSek(acc.Currency, acc.Balance);
+
+            Console.WriteLine($"Total balance (SEK): {totalSek:N2}");
+
+            var back = ConsoleHelper.PromptWithEscape("Press ENTER or ESC to go back");
+            if (back == "<ESC>" || string.IsNullOrWhiteSpace(back))
+                return;
+        }
+
+        // Creates a new account
+        public void CreateAccount(User user)
+        {
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("CREATE ACCOUNT");
+
+            Console.WriteLine("1. Savings");
+            Console.WriteLine("2. Checking");
+
+            var choice = ConsoleHelper.PromptWithEscape("Choose option");
+            if (choice == "<ESC>" || string.IsNullOrWhiteSpace(choice))
+                return;
+
+            if (choice != "1" && choice != "2")
+            {
+                ConsoleHelper.WriteError("Invalid choice.");
+                ConsoleHelper.PauseWithMessage();
+                return;
+            }
+
+            var type = choice == "1" ? "savings" : "checking";
+
+            bank.OpenAccount(user, type);
+
+            ConsoleHelper.WriteSuccess("Account created.");
+            ConsoleHelper.PauseWithMessage();
         }
 
         // Deposit money
         public void Deposit(User currentUser)
         {
             Console.Clear();
-            Console.WriteLine("=== DEPOSIT MONEY ===\n");
+            ConsoleHelper.WriteHeader("DEPOSIT");
 
             var account = SelectAccount(currentUser);
-            if (account == null) return;
+            if (account == null)
+                return;
 
-            Console.Write($"Amount to deposit ({account.Currency}): ");
-            if (decimal.TryParse(Console.ReadLine(), out var amount))
+            Console.Write($"Amount ({account.Currency}): ");
+            if (!decimal.TryParse(Console.ReadLine(), out var amount) || amount <= 0)
             {
-                if (amount <= 0)
-                {
-                    Console.WriteLine("\n✗ Deposit amount must be greater than zero!");
-                }
-                else
-                {
-                    account.Deposit(amount);
-                }
+                ConsoleHelper.WriteError("Invalid amount.");
+                Console.ReadKey();
+                return;
             }
-            else
+
+            decimal before = account.Balance;
+
+            account.Deposit(amount);
+
+            if (account.Balance == before)
             {
-                Console.WriteLine("\n✗ Invalid input — please enter a number.");
+                ConsoleHelper.WriteError("Deposit failed.");
+                Console.ReadKey();
+                return;
             }
+
+            Console.WriteLine();
+            ConsoleHelper.WriteSuccess("Deposit completed.");
+            Console.WriteLine($"New balance: {account.Balance:N2} {account.Currency}");
 
             Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
@@ -144,58 +131,82 @@ namespace bank.Services
         public void Withdraw(User currentUser)
         {
             Console.Clear();
-            Console.WriteLine("=== WITHDRAW MONEY ===\n");
+            ConsoleHelper.WriteHeader("WITHDRAW");
 
             var account = SelectAccount(currentUser);
-            if (account == null) return;
+            if (account == null)
+                return;
 
-            Console.Write($"Amount to withdraw ({account.Currency}): ");
-            if (decimal.TryParse(Console.ReadLine(), out var amount))
+            Console.Write($"Amount ({account.Currency}): ");
+            if (!decimal.TryParse(Console.ReadLine(), out var amount) || amount <= 0)
             {
-                
-                account.Withdraw(amount); 
-            }
-            else
-            {
-                Console.WriteLine("\n✗ Invalid amount!");
+                ConsoleHelper.WriteError("Invalid amount.");
+                Console.ReadKey();
+                return;
             }
 
+            // Store before balance to compare result
+            decimal before = account.Balance;
+
+            // Perform withdraw
+            account.Withdraw(amount);
+
+            // If no change → fail
+            if (account.Balance == before)
+            {
+                ConsoleHelper.WriteError("Withdraw failed. Check balance or limits.");
+                Console.ReadKey();
+                return;
+            }
+
+            // Success message (unified style)
+            Console.WriteLine();
+            ConsoleHelper.WriteSuccess($"Withdraw completed.");
+            Console.WriteLine($"New balance: {account.Balance:N2} {account.Currency}");
+
+            Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
         }
 
-        // Account selector
-        private Account? SelectAccount(User currentUser)
+
+        // Lets user pick which account to use
+        private Account? SelectAccount(User user)
         {
-            if (!currentUser.Accounts.Any())
+            if (!user.Accounts.Any())
             {
-                Console.WriteLine("You do not have any accounts yet.");
-                Console.ReadKey();
+                ConsoleHelper.WriteWarning("You have no accounts.");
+                ConsoleHelper.PauseWithMessage();
                 return null;
             }
 
-            if (currentUser.Accounts.Count == 1)
+            if (user.Accounts.Count == 1)
             {
-                var acc = currentUser.Accounts[0];
-                Console.WriteLine($"Using account: {acc.AccountNumber} ({acc.Currency})\n");
+                var acc = user.Accounts[0];
+                ConsoleHelper.WriteInfo($"Using: {acc.AccountNumber} ({acc.Currency})");
                 return acc;
             }
 
             Console.WriteLine("Select account:");
-            for (int i = 0; i < currentUser.Accounts.Count; i++)
+
+            for (int i = 0; i < user.Accounts.Count; i++)
             {
-                var acc = currentUser.Accounts[i];
-                Console.WriteLine($"{i + 1}. {acc.AccountNumber} - Balance: {acc.Balance} {acc.Currency}");
+                var acc = user.Accounts[i];
+                Console.WriteLine($"{i + 1}. {acc.AccountNumber} - {acc.Balance} {acc.Currency}");
             }
 
-            Console.Write("\nSelect: ");
-            if (int.TryParse(Console.ReadLine(), out var choice) &&
-                choice > 0 && choice <= currentUser.Accounts.Count)
+            var choice = ConsoleHelper.PromptWithEscape("Choose");
+            if (choice == "<ESC>" || string.IsNullOrWhiteSpace(choice))
+                return null;
+
+            if (int.TryParse(choice, out var index) &&
+                index >= 1 &&
+                index <= user.Accounts.Count)
             {
-                return currentUser.Accounts[choice - 1];
+                return user.Accounts[index - 1];
             }
 
-            Console.WriteLine("\n✗ Invalid selection!");
-            Console.ReadKey();
+            ConsoleHelper.WriteError("Invalid selection.");
+            ConsoleHelper.PauseWithMessage();
             return null;
         }
     }

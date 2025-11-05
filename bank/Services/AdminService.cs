@@ -1,5 +1,8 @@
 ﻿using bank.Core;
 using bank.Utils;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace bank.Services
 {
@@ -15,423 +18,391 @@ namespace bank.Services
             this.searchService = new SearchService(bank, exchangerateService);
         }
 
+        // Checks if ESC or empty input
+        private bool IsBack(string input)
+        {
+            return input == "<ESC>" || string.IsNullOrWhiteSpace(input);
+        }
+
+        // Reads input using ConsoleHelper
+        private string ReadInput(string message)
+        {
+            return ConsoleHelper.PromptWithEscape(message);
+        }
+
+        // Admin dashboard menu
         public void ShowAdminDashboard(User admin)
         {
             if (!admin.IsAdmin())
             {
-                Console.WriteLine("Access Denied: Admin privileges required.");
-                TableFormatter.PauseForUser();
-                return;
-            }
-
-            bool exit = false;
-            while (!exit)
-            {
-                Console.Clear();
-                Console.WriteLine("=== ADMIN DASHBOARD ===");
-                Console.WriteLine($"Logged in as: {admin.Name} (Admin)\n");
-
-                Console.WriteLine("1. Search Account");
-                Console.WriteLine("2. View All Users");
-                Console.WriteLine("3. View All Accounts");
-                Console.WriteLine("4. View All Exchange rates");
-                Console.WriteLine("5. Add/Update Exchange rates");
-                Console.WriteLine("6. Update Savings Interest Rate");
-                Console.WriteLine("7. Update Loan Interest Rate");
-                Console.WriteLine("8. Unblock users");
-                Console.WriteLine("9. Back to Main Menu");
-
-                var choice = Console.ReadLine();
-
-                switch (choice)
-                {
-                    case "1":
-                        SearchAccountMenu();
-                        break;
-                    case "2":
-                        ViewAllUsers();
-                        break;
-                    case "3":
-                        ViewAllAccounts();
-                        break;
-                    case "4":
-                        ViewAllRates();
-                        break;
-                    case "5":
-                        AddExchangeRate();
-                        break;
-                    case "6":
-                        UpdateSavingsInterestRate();
-                        break;
-                    case "7":
-                        UpdateLoanInterestRate();
-                        break;
-                    case "8":
-                        UnlockUserBlocks();
-                        break;
-                    case "9":
-                        exit = true;
-                        break;
-                    default:
-                        Console.WriteLine("\n Invalid choice.");
-                        TableFormatter.PauseForUser();
-                        break;
-                }
-            }
-        }
-
-        private List<User>? _blockedUsers;
-
-        private List<User> GetBlockedUsers()
-        {
-            return _blockedUsers ??= searchService.GetAllUsers().Where(u => u.isBlocked).ToList();
-        }
-
-        public void UnlockUserBlocks()
-        {
-            var blockedUsers = GetBlockedUsers();
-
-            if (blockedUsers.Count == 0)
-            {
-                Console.WriteLine("No blocked users found.");
-                TableFormatter.PauseForUser();
+                ConsoleHelper.WriteError("Access denied.");
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
             while (true)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
+                ConsoleHelper.ClearScreen();
+                ConsoleHelper.WriteHeader("ADMIN DASHBOARD");
+                Console.WriteLine($"Logged in as: {admin.Name} (Admin)\n");
+
+                Console.WriteLine("User Management");
+                Console.WriteLine("1. Search Account");
+                Console.WriteLine("2. View All Users");
+                Console.WriteLine("3. Create New User");
+                Console.WriteLine("4. Unblock Users\n");
+
+                Console.WriteLine("Account and Rates");
+                Console.WriteLine("5. View All Accounts");
+                Console.WriteLine("6. View All Exchange Rates");
+                Console.WriteLine("7. Add or Update Exchange Rates");
+                Console.WriteLine("8. Update Savings Rate");
+                Console.WriteLine("9. Update Loan Rate\n");
+
+                Console.WriteLine("10. Back");
+
+                var choice = ReadInput("Choose option");
+                if (IsBack(choice))
+                    return;
+
+                switch (choice)
+                {
+                    case "1": SearchAccountMenu(); break;
+                    case "2": ViewAllUsers(); break;
+                    case "3": CreateNewUserUI(); break;
+                    case "4": UnlockUserBlocks(); break;
+                    case "5": ViewAllAccounts(); break;
+                    case "6": ViewAllRates(); break;
+                    case "7": AddExchangeRate(); break;
+                    case "8": UpdateSavingsInterestRate(); break;
+                    case "9": UpdateLoanInterestRate(); break;
+                    case "10": return;
+
+                    default:
+                        ConsoleHelper.WriteWarning("Invalid choice.");
+                        ConsoleHelper.PauseWithMessage();
+                        break;
+                }
+            }
+        }
+
+        // Creates a new user
+        private void CreateNewUserUI()
+        {
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("CREATE NEW USER");
+
+            var id = ReadInput("Enter SSN");
+            if (IsBack(id)) return;
+
+            var name = ReadInput("Enter name");
+            if (IsBack(name)) return;
+
+            var pin = ReadInput("Enter PIN");
+            if (IsBack(pin)) return;
+
+            var user = new User(id, name, pin, UserRole.Customer);
+            bank.Users.Add(user);
+
+            ConsoleHelper.WriteSuccess("User created.");
+            ConsoleHelper.PauseWithMessage();
+        }
+
+        private List<User>? _blockedUsers;
+
+        // Gets blocked users
+        private List<User> GetBlockedUsers()
+        {
+            return _blockedUsers ??= searchService.GetAllUsers().Where(u => u.isBlocked).ToList();
+        }
+
+        // Unblocks users
+        public void UnlockUserBlocks()
+        {
+            while (true)
+            {
+                ConsoleHelper.ClearScreen();
+                ConsoleHelper.WriteHeader("UNBLOCK USERS");
+
+                var blockedUsers = GetBlockedUsers();
+
+                if (blockedUsers.Count == 0)
+                {
+                    ConsoleHelper.WriteInfo("No blocked users.");
+                    ConsoleHelper.PauseWithMessage();
+                    return;
+                }
+
                 foreach (var user in blockedUsers)
                 {
+                    Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine($"User: {user.Name} (ID: {user.Id}) is blocked");
                 }
                 Console.ResetColor();
 
-                Console.WriteLine("Type in user ID to unblock or type 'B' to go back:");
-                var input = Console.ReadLine();
-
-                if (string.Equals(input, "B", StringComparison.OrdinalIgnoreCase))
-                {
-                    break;
-                }
+                var input = ReadInput("Enter user ID to unblock");
+                if (IsBack(input)) return;
 
                 var userToUnlock = blockedUsers.FirstOrDefault(u => u.Id == input);
 
                 if (userToUnlock == null)
                 {
-                    Console.WriteLine("Invalid user ID. Please try again.");
-                    TableFormatter.PauseForUser();
+                    ConsoleHelper.WriteWarning("Invalid ID.");
+                    ConsoleHelper.PauseWithMessage();
                     continue;
                 }
 
                 userToUnlock.FailedLoginAttempts = 0;
+                _blockedUsers = null;
 
-                Console.ForegroundColor = ConsoleColor.Green;
-                if (!userToUnlock.isBlocked)
-                {
-                    Console.WriteLine($"User: {userToUnlock.Name} (ID: {userToUnlock.Id}) has been unblocked successfully.");
-                    Console.ResetColor();
-
-                    _blockedUsers = null;
-                    blockedUsers = GetBlockedUsers();
-                }
+                ConsoleHelper.WriteSuccess($"{userToUnlock.Name} unblocked.");
+                ConsoleHelper.PauseWithMessage();
             }
-            TableFormatter.PauseForUser();
         }
 
-        private void AddExchangeRate()
-        {
-            Console.Clear();
-            Console.WriteLine("=== UPDATE EXCHANGE RATES ===\n");
-
-            var rates = searchService.GetAllExchangeRates();
-            Console.WriteLine("Available currencies:");
-            TableFormatter.DisplayRatesTable(rates, "");
-
-            Console.WriteLine("Pick a rate to add or update by typing in their code:");
-            Console.WriteLine("Type 'NEW' if you want to add a new currency that isn’t listed.\n");
-
-            var selectedRate = Console.ReadLine();
-
-            if (string.Equals(selectedRate, "NEW", StringComparison.OrdinalIgnoreCase))
-            {
-                AddNewCurrency();
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(selectedRate))
-            {
-                Console.WriteLine("\n Invalid choice. Needs to be a number");
-                TableFormatter.PauseForUser();
-                return;
-            }
-
-            if (selectedRate.Equals("SEK", StringComparison.OrdinalIgnoreCase))
-            {
-                Console.WriteLine("Cannot change the base currency (SEK).");
-                TableFormatter.PauseForUser();
-                return;
-            }
-
-            if (!Enum.TryParse(selectedRate, true, out CurrencyCode choice))
-            {
-                Console.WriteLine("Invalid currency code. Choose one on the list.");
-                TableFormatter.PauseForUser();
-                return;
-            }
-
-            Console.WriteLine($"\n Enter the new exchange rate value for {selectedRate}: ");
-            var rateInput = Console.ReadLine();
-            if (!decimal.TryParse(rateInput, out var newRate))
-            {
-                Console.WriteLine("\n Invalid rate value. Needs to be a decimal number");
-                TableFormatter.PauseForUser();
-                return;
-            }
-
-            if (newRate <= 0 || newRate >= 999)
-            {
-                Console.WriteLine("\n Exchange rate cannot be too low or high!");
-                TableFormatter.PauseForUser();
-                return;
-            }
-
-            exchangerateService.AddRates(new ExchangeRate((CurrencyCode)choice, newRate));
-            TableFormatter.PauseForUser();
-        }
-
-        private void ViewAllRates()
-        {
-            Console.Clear();
-            Console.WriteLine("=== ALL RATES ===\n");
-
-            var rates = searchService.GetAllExchangeRates();
-
-            if (!rates.Any())
-            {
-                Console.WriteLine("No exchangerates added yet.");
-                TableFormatter.PauseForUser();
-                return;
-            }
-
-            TableFormatter.DisplayRatesTable(rates, "ALL EXCHANGE RATES");
-            TableFormatter.PauseForUser();
-        }
-
+        // Lists all users
         private void ViewAllUsers()
         {
-            Console.Clear();
-            Console.WriteLine("=== VIEW ALL USERS ===\n");
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("ALL USERS");
 
-            var allUsers = searchService.GetAllUsers();
+            var users = searchService.GetAllUsers();
 
-            if (!allUsers.Any())
+            if (!users.Any())
             {
-                Console.WriteLine("No users in the system.");
-                TableFormatter.PauseForUser();
+                ConsoleHelper.WriteWarning("No users found.");
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
-            TableFormatter.DisplayUsersTable(allUsers, "ALL USERS");
-            TableFormatter.PauseForUser();
+            foreach (var u in users)
+                Console.WriteLine($"{u.Id} - {u.Name} ({u.Role})");
+
+            ConsoleHelper.PauseWithMessage();
         }
 
+        // Lists all accounts
         private void ViewAllAccounts()
         {
-            Console.Clear();
-            Console.WriteLine("=== VIEW ALL ACCOUNTS ===\n");
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("ALL ACCOUNTS");
 
-            var allAccounts = searchService.GetAllAccounts();
+            var accounts = searchService.GetAllAccounts();
 
-            if (!allAccounts.Any())
+            if (!accounts.Any())
             {
-                Console.WriteLine("No accounts in the system.");
-                TableFormatter.PauseForUser();
+                ConsoleHelper.WriteWarning("No accounts found.");
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
-            TableFormatter.DisplayAccountsTable(allAccounts, "ALL ACCOUNTS");
-            TableFormatter.PauseForUser();
+            foreach (var a in accounts)
+                Console.WriteLine($"{a.AccountNumber} - {a.Owner.Name} - {a.Balance} {a.Currency}");
+
+            ConsoleHelper.PauseWithMessage();
         }
 
+        // Search menu
         private void SearchAccountMenu()
         {
-            Console.Clear();
-            Console.WriteLine("=== SEARCH ACCOUNT ===\n");
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("SEARCH ACCOUNT");
 
-            Console.WriteLine("Search by:");
-            Console.WriteLine("1. Account Number");
-            Console.WriteLine("2. Username");
-            Console.Write("\nChoose (1-2): ");
+            Console.WriteLine("1. Search by Account Number");
+            Console.WriteLine("2. Search by Username");
 
-            var searchType = Console.ReadLine();
+            var choice = ReadInput("Choose");
+            if (IsBack(choice)) return;
 
-            switch (searchType)
+            if (choice == "1") SearchByAccountNumber();
+            else if (choice == "2") SearchByUsername();
+            else
             {
-                case "1":
-                    SearchByAccountNumber();
-                    break;
-                case "2":
-                    SearchByUsername();
-                    break;
-                default:
-                    Console.WriteLine("\n✗ Invalid choice.");
-                    TableFormatter.PauseForUser();
-                    break;
+                ConsoleHelper.WriteWarning("Invalid choice.");
+                ConsoleHelper.PauseWithMessage();
             }
         }
 
+        // Search by account number
         private void SearchByAccountNumber()
         {
-            Console.Write("\nEnter account number: ");
-            var accountNumber = Console.ReadLine();
-
-            if (string.IsNullOrWhiteSpace(accountNumber))
-            {
-                Console.WriteLine("\n✗ Account number cannot be empty!");
-                TableFormatter.PauseForUser();
-                return;
-            }
+            var accountNumber = ReadInput("Enter account number");
+            if (IsBack(accountNumber)) return;
 
             var account = searchService.FindAccountByNumber(accountNumber);
 
             if (account == null)
             {
-                Console.WriteLine($"\n✗ No account found with number: {accountNumber}");
-                TableFormatter.PauseForUser();
+                ConsoleHelper.WriteWarning("Account not found.");
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
-            TableFormatter.DisplayAccountsTable(new List<Account> { account });
-            TableFormatter.PauseForUser();
+            Console.WriteLine($"{account.AccountNumber} - {account.Owner.Name} - {account.Balance} {account.Currency}");
+            ConsoleHelper.PauseWithMessage();
         }
 
+        // Search by username
         private void SearchByUsername()
         {
-            Console.Write("\nEnter username: ");
-            var username = Console.ReadLine();
-
-            if (string.IsNullOrWhiteSpace(username))
-            {
-                Console.WriteLine("\n✗ Username cannot be empty!");
-                TableFormatter.PauseForUser();
-                return;
-            }
+            var username = ReadInput("Enter username");
+            if (IsBack(username)) return;
 
             var accounts = searchService.FindAccountsByUsername(username);
 
             if (!accounts.Any())
             {
-                Console.WriteLine($"\n✗ No accounts found for user: {username}");
-                TableFormatter.PauseForUser();
+                ConsoleHelper.WriteWarning("No accounts found.");
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
-            TableFormatter.DisplayAccountsTable(accounts);
-            TableFormatter.PauseForUser();
+            foreach (var a in accounts)
+                Console.WriteLine($"{a.AccountNumber} - {a.Owner.Name} - {a.Balance} {a.Currency}");
+
+            ConsoleHelper.PauseWithMessage();
         }
 
+        // Shows all exchange rates
+        private void ViewAllRates()
+        {
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("EXCHANGE RATES");
+
+            var rates = searchService.GetAllExchangeRates();
+
+            if (!rates.Any())
+            {
+                ConsoleHelper.WriteWarning("No rates found.");
+                ConsoleHelper.PauseWithMessage();
+                return;
+            }
+
+            foreach (var r in rates)
+                Console.WriteLine($"{(r.CustomCode ?? r.Code.ToString())} -> {r.Rate}");
+
+            ConsoleHelper.PauseWithMessage();
+        }
+
+        // Adds or updates a rate
+        private void AddExchangeRate()
+        {
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("UPDATE EXCHANGE RATES");
+
+            var rates = searchService.GetAllExchangeRates();
+
+            foreach (var r in rates)
+                Console.WriteLine($"{(r.CustomCode ?? r.Code.ToString())} -> {r.Rate}");
+
+            var selected = ReadInput("Enter currency code or NEW");
+            if (IsBack(selected)) return;
+
+            if (selected.Equals("NEW", StringComparison.OrdinalIgnoreCase))
+            {
+                AddNewCurrency();
+                return;
+            }
+
+            if (!Enum.TryParse(selected, true, out CurrencyCode code))
+            {
+                ConsoleHelper.WriteWarning("Invalid currency.");
+                ConsoleHelper.PauseWithMessage();
+                return;
+            }
+
+            var rateText = ReadInput($"Enter new rate for {selected}");
+            if (IsBack(rateText)) return;
+
+            if (!decimal.TryParse(rateText, out var newRate))
+            {
+                ConsoleHelper.WriteWarning("Invalid rate.");
+                ConsoleHelper.PauseWithMessage();
+                return;
+            }
+
+            exchangerateService.AddRates(new ExchangeRate(code, newRate));
+            ConsoleHelper.WriteSuccess("Rate updated.");
+            ConsoleHelper.PauseWithMessage();
+        }
+
+        // Adds a completely new currency
         private void AddNewCurrency()
         {
-            Console.Clear();
-            Console.WriteLine("=== ADD NEW CURRENCY ===\n");
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("ADD NEW CURRENCY");
 
-            Console.Write("Enter new currency code (e.g. EUR): ");
-            var inputCode = Console.ReadLine()?.Trim().ToUpper();
+            var code = ReadInput("Enter currency code");
+            if (IsBack(code)) return;
 
-            if (string.IsNullOrWhiteSpace(inputCode))
+            var rateText = ReadInput("Enter rate");
+            if (IsBack(rateText)) return;
+
+            if (!decimal.TryParse(rateText, out var rate))
             {
-                Console.WriteLine("Invalid currency code.");
-                TableFormatter.PauseForUser();
+                ConsoleHelper.WriteWarning("Invalid rate.");
+                ConsoleHelper.PauseWithMessage();
                 return;
-            }
-
-            if (inputCode == "SEK")
-            {
-                Console.WriteLine("You cannot add or modify the base currency (SEK).");
-                TableFormatter.PauseForUser();
-                return;
-            }
-
-            var existingRates = searchService.GetAllExchangeRates();
-            if (existingRates.Any(r =>
-                (r.CustomCode != null && r.CustomCode.Equals(inputCode, StringComparison.OrdinalIgnoreCase)) ||
-                r.Code.ToString().Equals(inputCode, StringComparison.OrdinalIgnoreCase)))
-            {
-                Console.WriteLine("That currency already exists.");
-                TableFormatter.PauseForUser();
-                return;
-            }
-
-            Console.Write($"Enter exchange rate for {inputCode} (vs SEK = 1.00): ");
-            if (!decimal.TryParse(Console.ReadLine(), out decimal rate) || rate <= 0)
-            {
-                Console.WriteLine("Invalid rate value.");
-                TableFormatter.PauseForUser();
-                return;
-            }
-
-            CurrencyCode parsedCode;
-            bool isKnown = Enum.TryParse(inputCode, true, out parsedCode);
-
-            if (!isKnown)
-            {
-                Console.WriteLine($"Note: '{inputCode}' is not a predefined currency, adding it as custom.");
-                parsedCode = (CurrencyCode)(Enum.GetValues(typeof(CurrencyCode)).Cast<int>().Max() + 1);
             }
 
             var newRate = new ExchangeRate
             {
-                Code = parsedCode,
-                CustomCode = isKnown ? null : inputCode,
+                Code = 0,
+                CustomCode = code,
                 Rate = rate,
                 LastUpdated = DateTime.Now
             };
 
             exchangerateService.AddRates(newRate);
 
-            Console.WriteLine($"\nAdded new currency {inputCode} with rate {rate}");
-            TableFormatter.PauseForUser();
+            ConsoleHelper.WriteSuccess("Currency added.");
+            ConsoleHelper.PauseWithMessage();
         }
 
+        // Updates savings interest rate
         private void UpdateSavingsInterestRate()
         {
-            Console.Clear();
-            Console.WriteLine("=== UPDATE SAVINGS INTEREST RATE ===\n");
-            Console.WriteLine($"Current savings interest rate: {bank.DefaultSavingsInterestRate}%");
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("UPDATE SAVINGS RATE");
 
-            Console.Write("\nEnter new rate (%): ");
-            if (decimal.TryParse(Console.ReadLine(), out decimal newRate))
+            Console.WriteLine($"Current: {bank.DefaultSavingsInterestRate}%");
+
+            var input = ReadInput("Enter new rate");
+            if (IsBack(input)) return;
+
+            if (!decimal.TryParse(input, out var newRate))
             {
-                bank.UpdateDefaultSavingsRate(newRate);
-                Console.WriteLine($"\nSavings interest rate updated to {bank.DefaultSavingsInterestRate}%");
-            }
-            else
-            {
-                Console.WriteLine("\nInvalid input.");
+                ConsoleHelper.WriteWarning("Invalid rate.");
+                ConsoleHelper.PauseWithMessage();
+                return;
             }
 
-            TableFormatter.PauseForUser();
+            bank.UpdateDefaultSavingsRate(newRate);
+            ConsoleHelper.WriteSuccess("Savings rate updated.");
+            ConsoleHelper.PauseWithMessage();
         }
 
+        // Updates loan interest rate
         private void UpdateLoanInterestRate()
         {
-            Console.Clear();
-            Console.WriteLine("=== UPDATE LOAN INTEREST RATE ===\n");
-            Console.WriteLine($"Current loan interest rate: {LoanService.CurrentLoanInterestRate}%");
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("UPDATE LOAN RATE");
 
-            Console.Write("\nEnter new rate (%): ");
-            if (decimal.TryParse(Console.ReadLine(), out decimal newRate))
+            Console.WriteLine($"Current: {LoanService.CurrentLoanInterestRate}%");
+
+            var input = ReadInput("Enter new rate");
+            if (IsBack(input)) return;
+
+            if (!decimal.TryParse(input, out var newRate))
             {
-                LoanService.SetLoanInterestRate(newRate);
-                Console.WriteLine($"\nLoan interest rate updated to {LoanService.CurrentLoanInterestRate}%");
-            }
-            else
-            {
-                Console.WriteLine("\nInvalid input.");
+                ConsoleHelper.WriteWarning("Invalid rate.");
+                ConsoleHelper.PauseWithMessage();
+                return;
             }
 
-            TableFormatter.PauseForUser();
+            LoanService.SetLoanInterestRate(newRate);
+            ConsoleHelper.WriteSuccess("Loan rate updated.");
+            ConsoleHelper.PauseWithMessage();
         }
     }
 }

@@ -21,7 +21,6 @@ namespace bank.Services
                 Console.WriteLine("Interest rate must be between 0 and 20%");
         }
 
-
         public LoanService(Bank bank)
         {
             this.bank = bank;
@@ -58,7 +57,7 @@ namespace bank.Services
             foreach (var acc in currentUser.Accounts)
                 totalBalanceSek += exchangerateService.ConvertToSek(acc.Currency, acc.Balance);
 
-            decimal maxLoan = totalBalanceSek * 5;;
+            decimal maxLoan = totalBalanceSek * 5; ;
 
             Console.WriteLine($"Your total balance: {totalBalanceSek:N2} SEK");
             Console.WriteLine($"Maximum allowed loan (x5): {maxLoan:N2} SEK\n");
@@ -112,7 +111,6 @@ namespace bank.Services
 
             Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
-
         }
     }
 }

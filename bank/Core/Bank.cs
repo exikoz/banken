@@ -19,19 +19,16 @@ namespace bank.Core
             return Accounts.FirstOrDefault(a => a.AccountNumber == accountNumber);
         }
 
-        // Create account with auto-generated number: 01-01, 01-02, 02-01...
+        // Create account with auto-generated number
         public Account OpenAccount(User user, string accountType)
         {
-            // Ensure user exists
             if (!Users.Any(u => u.Id == user.Id))
                 Users.Add(user);
 
-            // Build account number
             int userIndex = Users.FindIndex(u => u.Id == user.Id) + 1;
             int perUserIndex = user.Accounts.Count + 1;
             string accountNumber = $"{userIndex:D2}-{perUserIndex:D2}";
 
-            // Load currencies
             var exchangeService = new bank.Services.ExchangerateService();
             var currencies = exchangeService.getAllRates()
                 .Select(r => string.IsNullOrWhiteSpace(r.CustomCode) ? r.Code.ToString() : r.CustomCode)
@@ -46,14 +43,15 @@ namespace bank.Core
 
             ConsoleHelper.WriteInfo("Select currency:");
             for (int i = 0; i < currencies.Count; i++)
-                ConsoleHelper.WriteInfo($"{i + 1}. {currencies[i]}");
+            {
+                Console.WriteLine($"{i + 1}. {currencies[i]}");
+            }
 
             var input = ConsoleHelper.Prompt("Choice");
             var choice = int.TryParse(input, out int c) && c >= 1 && c <= currencies.Count
                 ? currencies[c - 1]
                 : "SEK";
 
-            // Create account
             Account account = accountType.ToLower() switch
             {
                 "savings" => new SavingsAccount(accountNumber, user, accountType, choice),
@@ -68,7 +66,7 @@ namespace bank.Core
             return account;
         }
 
-        // Manual creation (used by seeder)
+        // Manual creation for seeding
         public Account OpenAccount(User user, string accountNumber, string accountType)
         {
             if (!Users.Any(u => u.Id == user.Id))
@@ -127,9 +125,8 @@ namespace bank.Core
                 return false;
             }
 
-            bool ok = from is CheckingAccount ca
-                ? (from.Balance - amount) >= -ca.OverdraftLimit
-                : amount <= from.Balance;
+            // Overdraft paused. Only allow transfer if balance is enough.
+            bool ok = amount <= from.Balance;
 
             if (!ok)
             {
@@ -158,13 +155,13 @@ namespace bank.Core
                 Users.Add(user);
         }
 
-        // Find user by ID
+        // Find user by id
         public User? FindUser(string userId)
         {
             return Users.FirstOrDefault(u => u.Id == userId);
         }
 
-        // Update savings interest
+        // Update savings interest rate
         public void UpdateDefaultSavingsRate(decimal newRate)
         {
             if (newRate > 0 && newRate < 10)
