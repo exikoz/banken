@@ -44,22 +44,26 @@ namespace bank.Services
             {
                 ConsoleHelper.ClearScreen();
                 ConsoleHelper.WriteHeader("ADMIN DASHBOARD");
-                Console.WriteLine($"Logged in as: {admin.Name} (Admin)\n");
+                ConsoleHelper.WriteInfo($"Logged in as: {admin.Name} (Admin)");
+                Console.WriteLine();
 
-                Console.WriteLine("User Management");
-                Console.WriteLine("1. Search Account");
-                Console.WriteLine("2. View All Users");
-                Console.WriteLine("3. Create New User");
-                Console.WriteLine("4. Unblock Users\n");
+                ConsoleHelper.WriteHighlight("USER MANAGEMENT", ConsoleColor.Cyan);
+                ConsoleHelper.WriteMenuOption("1", "Search Account");
+                ConsoleHelper.WriteMenuOption("2", "View All Users");
+                ConsoleHelper.WriteMenuOption("3", "Create New User");
+                ConsoleHelper.WriteMenuOption("4", "Unblock Users");
+                Console.WriteLine();
 
-                Console.WriteLine("Account and Rates");
-                Console.WriteLine("5. View All Accounts");
-                Console.WriteLine("6. View All Exchange Rates");
-                Console.WriteLine("7. Add or Update Exchange Rates");
-                Console.WriteLine("8. Update Savings Rate");
-                Console.WriteLine("9. Update Loan Rate\n");
+                ConsoleHelper.WriteHighlight("ACCOUNTS AND RATES", ConsoleColor.Cyan);
+                ConsoleHelper.WriteMenuOption("5", "View All Accounts");
+                ConsoleHelper.WriteMenuOption("6", "View All Exchange Rates");
+                ConsoleHelper.WriteMenuOption("7", "Add or Update Exchange Rates");
+                ConsoleHelper.WriteMenuOption("8", "Update Savings Rate");
+                ConsoleHelper.WriteMenuOption("9", "Update Loan Rate");
+                Console.WriteLine();
 
-                Console.WriteLine("10. Back");
+                ConsoleHelper.WriteMenuOption("10", "Back");
+                Console.WriteLine();
 
                 var choice = ReadInput("Choose option");
                 if (IsBack(choice))
@@ -92,19 +96,23 @@ namespace bank.Services
             ConsoleHelper.ClearScreen();
             ConsoleHelper.WriteHeader("CREATE NEW USER");
 
-            var id = ReadInput("Enter SSN");
+            ConsoleHelper.WriteInfo("Enter the user details below:");
+            Console.WriteLine();
+
+            var id = ReadInput("Enter SSN (YYYYMMDD-XXXX)");
             if (IsBack(id)) return;
 
             var name = ReadInput("Enter name");
             if (IsBack(name)) return;
 
-            var pin = ConsoleHelper.PromptWithEscapeMasked("Enter PIN");
+            var pin = ConsoleHelper.PromptWithEscapeMasked("Enter PIN (4 digits)");
             if (IsBack(pin)) return;
 
             var user = new User(id, name, pin, UserRole.Customer);
             bank.Users.Add(user);
 
-            ConsoleHelper.WriteSuccess("User created.");
+            ConsoleHelper.WriteSuccess($"User '{name}' created successfully.");
+            ConsoleHelper.WriteInfo($"User ID: {id}");
             ConsoleHelper.PauseWithMessage();
         }
 
@@ -133,12 +141,11 @@ namespace bank.Services
                     return;
                 }
 
-                foreach (var user in blockedUsers)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"User: {user.Name} (ID: {user.Id}) is blocked");
-                }
-                Console.ResetColor();
+                TableFormatter.DisplayUsersTable(blockedUsers, "BLOCKED USERS");
+
+                Console.WriteLine();
+                ConsoleHelper.WriteInfo("These users are currently blocked due to too many failed login attempts.");
+                Console.WriteLine();
 
                 var input = ReadInput("Enter user ID to unblock");
                 if (IsBack(input)) return;
@@ -155,7 +162,7 @@ namespace bank.Services
                 userToUnlock.FailedLoginAttempts = 0;
                 _blockedUsers = null;
 
-                ConsoleHelper.WriteSuccess($"{userToUnlock.Name} unblocked.");
+                ConsoleHelper.WriteSuccess($"User '{userToUnlock.Name}' has been successfully unblocked.");
                 ConsoleHelper.PauseWithMessage();
             }
         }
@@ -175,8 +182,7 @@ namespace bank.Services
                 return;
             }
 
-            foreach (var u in users)
-                Console.WriteLine($"{u.Id} - {u.Name} ({u.Role})");
+            TableFormatter.DisplayUsersTable(users, "ALL REGISTERED USERS");
 
             ConsoleHelper.PauseWithMessage();
         }
@@ -196,8 +202,7 @@ namespace bank.Services
                 return;
             }
 
-            foreach (var a in accounts)
-                Console.WriteLine($"{a.AccountNumber} - {a.Owner.Name} - {a.Balance} {a.Currency}");
+            TableFormatter.DisplayAccountsTable(accounts, "ALL BANK ACCOUNTS");
 
             ConsoleHelper.PauseWithMessage();
         }
@@ -208,8 +213,9 @@ namespace bank.Services
             ConsoleHelper.ClearScreen();
             ConsoleHelper.WriteHeader("SEARCH ACCOUNT");
 
-            Console.WriteLine("1. Search by Account Number");
-            Console.WriteLine("2. Search by Username");
+            ConsoleHelper.WriteMenuOption("1", "Search by Account Number");
+            ConsoleHelper.WriteMenuOption("2", "Search by Username");
+            Console.WriteLine();
 
             var choice = ReadInput("Choose");
             if (IsBack(choice)) return;
@@ -226,6 +232,9 @@ namespace bank.Services
         // Search by account number
         private void SearchByAccountNumber()
         {
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("SEARCH BY ACCOUNT NUMBER");
+
             var accountNumber = ReadInput("Enter account number");
             if (IsBack(accountNumber)) return;
 
@@ -238,13 +247,17 @@ namespace bank.Services
                 return;
             }
 
-            Console.WriteLine($"{account.AccountNumber} - {account.Owner.Name} - {account.Balance} {account.Currency}");
+            TableFormatter.DisplayAccountsTable(new List<Account> { account }, "SEARCH RESULT");
+
             ConsoleHelper.PauseWithMessage();
         }
 
         // Search by username
         private void SearchByUsername()
         {
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("SEARCH BY USERNAME");
+
             var username = ReadInput("Enter username");
             if (IsBack(username)) return;
 
@@ -257,8 +270,7 @@ namespace bank.Services
                 return;
             }
 
-            foreach (var a in accounts)
-                Console.WriteLine($"{a.AccountNumber} - {a.Owner.Name} - {a.Balance} {a.Currency}");
+            TableFormatter.DisplayAccountsTable(accounts, $"ACCOUNTS FOR '{username}'");
 
             ConsoleHelper.PauseWithMessage();
         }
@@ -278,8 +290,7 @@ namespace bank.Services
                 return;
             }
 
-            foreach (var r in rates)
-                Console.WriteLine($"{(r.CustomCode ?? r.Code.ToString())} -> {r.Rate}");
+            TableFormatter.DisplayRatesTable(rates, "CURRENT EXCHANGE RATES");
 
             ConsoleHelper.PauseWithMessage();
         }
@@ -296,9 +307,9 @@ namespace bank.Services
 
             var rates = searchService.GetAllExchangeRates();
 
-            foreach (var r in rates)
-                Console.WriteLine($"{(r.CustomCode ?? r.Code.ToString())} -> {r.Rate}");
+            TableFormatter.DisplayRatesTable(rates, "CURRENT EXCHANGE RATES");
 
+            Console.WriteLine();
             var selected = ReadInput("Enter currency code or type (N) to add a new one").ToUpper();
             if (IsBack(selected)) return;
 
@@ -309,45 +320,61 @@ namespace bank.Services
             }
             if(selected.Equals("SEK") || selected.Equals("0"))
             {
-                ConsoleHelper.WriteWarning("Cannot edit base currency");
-                return; // refactor if given time so this is shown in ViewRates, so if input is faulty and we go "return" , it rolls back to the ViewRates menu instead of full menu.
-                
+                ConsoleHelper.WriteWarning("Cannot edit base currency (SEK).");
+                ConsoleHelper.PauseWithMessage();
+                return;
             }
 
             if (!Enum.TryParse(selected, true, out CurrencyCode code))
             {
-                ConsoleHelper.WriteWarning("Invalid currency.");
+                ConsoleHelper.WriteWarning("Invalid currency code.");
                 ConsoleHelper.PauseWithMessage();
-
+                return;
             }
 
-            Console.WriteLine($"You chose: {selected}");
-            var CrudChoice = ReadInput($"Choose: (D) for delete - (U) to update");
+            ConsoleHelper.WriteInfo($"Selected currency: {selected}");
+            Console.WriteLine();
+            var CrudChoice = ReadInput($"Choose action - (U) Update | (D) Delete");
+            if (IsBack(CrudChoice)) return;
+
             if (CrudChoice.Equals("U", StringComparison.OrdinalIgnoreCase))
             {
-                var rateText = ReadInput($"Enter new rate for {selected}");
+                var rateText = ReadInput($"Enter new rate for {selected} to SEK");
                 if (IsBack(rateText)) return;
 
                 if (!decimal.TryParse(rateText, out var newRate))
                 {
-                    ConsoleHelper.WriteWarning("Invalid rate.");
+                    ConsoleHelper.WriteWarning("Invalid rate. Please enter a valid number.");
                     ConsoleHelper.PauseWithMessage();
                     return;
                 }
 
                 exchangerateService.AddRates(new ExchangeRate(code, newRate));
-                ConsoleHelper.WriteSuccess("Rate updated.");
+                ConsoleHelper.WriteSuccess($"Exchange rate for {selected} updated to {newRate}.");
                 ConsoleHelper.PauseWithMessage();
             }
             else if (CrudChoice.Equals("D", StringComparison.OrdinalIgnoreCase))
             {
-                var rateText = ReadInput($"Are you sure? (Y) / (N) ");
-                if (IsBack(rateText)) return;
-                if(rateText.Equals("Y", StringComparison.OrdinalIgnoreCase))
+                ConsoleHelper.WriteWarning($"Are you sure you want to delete {selected}?");
+                var confirmation = ReadInput("Type (Y) to confirm or (N) to cancel");
+                if (IsBack(confirmation)) return;
+
+                if(confirmation.Equals("Y", StringComparison.OrdinalIgnoreCase))
                 {
                     exchangerateService.DeleteField(code);
+                    ConsoleHelper.WriteSuccess($"Currency {selected} deleted successfully.");
+                    ConsoleHelper.PauseWithMessage();
                 }
-
+                else
+                {
+                    ConsoleHelper.WriteInfo("Deletion cancelled.");
+                    ConsoleHelper.PauseWithMessage();
+                }
+            }
+            else
+            {
+                ConsoleHelper.WriteWarning("Invalid choice.");
+                ConsoleHelper.PauseWithMessage();
             }
 
 
@@ -360,15 +387,18 @@ namespace bank.Services
             ConsoleHelper.ClearScreen();
             ConsoleHelper.WriteHeader("ADD NEW CURRENCY");
 
-            var code = ReadInput("Enter currency code");
+            ConsoleHelper.WriteInfo("Add a new currency to the exchange rate system:");
+            Console.WriteLine();
+
+            var code = ReadInput("Enter currency code (e.g. EUR, INR)");
             if (IsBack(code)) return;
 
-            var rateText = ReadInput("Enter rate");
+            var rateText = ReadInput("Enter exchange rate to SEK");
             if (IsBack(rateText)) return;
 
             if (!decimal.TryParse(rateText, out var rate))
             {
-                ConsoleHelper.WriteWarning("Invalid rate.");
+                ConsoleHelper.WriteWarning("Invalid rate. Please enter a valid number.");
                 ConsoleHelper.PauseWithMessage();
                 return;
             }
@@ -376,14 +406,14 @@ namespace bank.Services
             var newRate = new ExchangeRate
             {
                 Code = 0,
-                CustomCode = code,
+                CustomCode = code.ToUpper(),
                 Rate = rate,
                 LastUpdated = DateTime.Now
             };
 
             exchangerateService.AddRates(newRate);
 
-            ConsoleHelper.WriteSuccess("Currency added.");
+            ConsoleHelper.WriteSuccess($"Currency '{code.ToUpper()}' added successfully with rate {rate}.");
             ConsoleHelper.PauseWithMessage();
         }
 
@@ -393,9 +423,10 @@ namespace bank.Services
             ConsoleHelper.ClearScreen();
             ConsoleHelper.WriteHeader("UPDATE SAVINGS RATE");
 
-            Console.WriteLine($"Current: {bank.DefaultSavingsInterestRate}%");
+            ConsoleHelper.WriteInfo($"Current savings interest rate: {bank.DefaultSavingsInterestRate}%");
+            Console.WriteLine();
 
-            var input = ReadInput("Enter new rate");
+            var input = ReadInput("Enter new rate (%)");
             if (IsBack(input)) return;
 
             if (!decimal.TryParse(input, out var newRate))
@@ -406,7 +437,7 @@ namespace bank.Services
             }
 
             bank.UpdateDefaultSavingsRate(newRate);
-            ConsoleHelper.WriteSuccess("Savings rate updated.");
+            ConsoleHelper.WriteSuccess($"Savings rate updated from {bank.DefaultSavingsInterestRate}% to {newRate}%.");
             ConsoleHelper.PauseWithMessage();
         }
 
@@ -416,9 +447,10 @@ namespace bank.Services
             ConsoleHelper.ClearScreen();
             ConsoleHelper.WriteHeader("UPDATE LOAN RATE");
 
-            Console.WriteLine($"Current: {LoanService.CurrentLoanInterestRate}%");
+            ConsoleHelper.WriteInfo($"Current loan interest rate: {LoanService.CurrentLoanInterestRate}%");
+            Console.WriteLine();
 
-            var input = ReadInput("Enter new rate");
+            var input = ReadInput("Enter new rate (%)");
             if (IsBack(input)) return;
 
             if (!decimal.TryParse(input, out var newRate))
@@ -428,8 +460,9 @@ namespace bank.Services
                 return;
             }
 
+            var oldRate = LoanService.CurrentLoanInterestRate;
             LoanService.SetLoanInterestRate(newRate);
-            ConsoleHelper.WriteSuccess("Loan rate updated.");
+            ConsoleHelper.WriteSuccess($"Loan rate updated from {oldRate}% to {newRate}%.");
             ConsoleHelper.PauseWithMessage();
         }
     }
