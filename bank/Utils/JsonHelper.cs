@@ -50,13 +50,9 @@ namespace bank.Utils
         public void WriteJson<T>(T data, string? name = null)
         {
 
-            if (!ValidationHelper.IsValid(data))
-                return;
 
-            if (!ValidationHelper.IsValid(name))
-                return;
 
-            string FileName = name ?? typeof(T).Name + DateTime.Now  + ".json";
+            string FileName = name ?? typeof(T).Name + ".json";
             string _defaultPath =  Path.Combine(AppContext.BaseDirectory, FileName);
             List<T> existingData = new List<T>();
 
@@ -119,40 +115,39 @@ namespace bank.Utils
 
 
 
-        public void RemoveJsonByField<T>(Func<T, bool> fieldToUpdate, T removeData, string filePath)
+        public void DeleteByPredicate<T>(Func<T, bool> predicate, string filePath) where T : class
         {
-            if (!ValidationHelper.IsValid(removeData))
-                return;
-
-            if (!ValidationHelper.IsValid(filePath))
-                return;
-
-            if (!ValidationHelper.IsValid(fieldToUpdate))
-                return;
-
             if (!File.Exists(filePath))
             {
-                WriteJson(removeData, filePath);
+                ConsoleHelper.WriteWarning("File not found, nothing to remove.");
                 return;
             }
 
 
-            var dataSet = DeserializeJson<T>(filePath);
-            if (dataSet == null)
-            {
-                ConsoleHelper.WriteWarning("No data found.");
-            }
-            ;
+            List<T> dataSet = JsonHelper.DeserializeJson<T>(filePath);
 
-            var exists = dataSet.FirstOrDefault(removeData);
-            if (exists == null)
+            if (dataSet == null || !dataSet.Any())
             {
-                ConsoleHelper.WriteWarning("No data to remove. ");
+                ConsoleHelper.WriteWarning("No data found in file.");
+                return;
             }
+            var itemToRemove = dataSet.SingleOrDefault(predicate);
+
+            if (itemToRemove == null)
+            {
+                ConsoleHelper.WriteWarning("Currency not found in the file.");
+                return;
+            }
+
+            dataSet.Remove(itemToRemove);
+            //File.Copy(filePath, filePath + ".bak", overwrite: true);
+
             string output = JsonSerializer.Serialize(dataSet, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(filePath, output);
+
             ConsoleHelper.WriteSuccess("Data successfully removed!");
         }
+        
 
 
 
