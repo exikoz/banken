@@ -46,8 +46,20 @@ namespace bank.Services
                 var type = acc is CheckingAccount ? "Checking" :
                            acc is SavingsAccount ? "Savings" : "Account";
 
+
+
+                decimal reservedAmount = acc.Transactions
+                    .Where(t => t.IsPending)
+                    .Sum(t => t.Amount);
+
+
+
+                var actualBalance = acc.Balance - reservedAmount;
+
                 Console.WriteLine($"{acc.AccountNumber} - {type}");
-                Console.WriteLine($"Balance: {acc.Balance} {acc.Currency}");
+                Console.WriteLine($"Balance: {actualBalance} {acc.Currency}");
+                ConsoleHelper.WriteInfo($"Reserved: {reservedAmount} {acc.Currency}");
+                Console.WriteLine($"Total: {acc.Balance} {acc.Currency}");
                 Console.WriteLine();
             }
 
@@ -184,7 +196,6 @@ namespace bank.Services
                 Console.ReadKey();
                 return;
             }
-
 
 
 

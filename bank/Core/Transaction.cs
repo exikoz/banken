@@ -53,7 +53,7 @@ namespace bank.Core
             // Default pending values for standard transactions
             IsPending = true;
             Status = "Pending";
-            ReleaseAt = null;
+            ReleaseAt = ProcessDuration;
         }
 
 
