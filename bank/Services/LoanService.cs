@@ -1,4 +1,5 @@
 ﻿using bank.Core;
+using bank.Utils;
 using System;
 using System.Linq;
 
@@ -42,13 +43,13 @@ namespace bank.Services
 
         public void ApplyForLoan(User currentUser)
         {
-            Console.Clear();
-            Console.WriteLine("=== APPLY FOR LOAN ===\n");
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("APPLY FOR LOAN");
 
             if (currentUser.Accounts == null || !currentUser.Accounts.Any())
             {
-                Console.WriteLine("You have no accounts. Cannot apply for a loan.");
-                Console.ReadKey();
+                ConsoleHelper.WriteWarning("You have no accounts. Cannot apply for a loan.");
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
@@ -57,36 +58,41 @@ namespace bank.Services
             foreach (var acc in currentUser.Accounts)
                 totalBalanceSek += exchangerateService.ConvertToSek(acc.Currency, acc.Balance);
 
-            decimal maxLoan = totalBalanceSek * 5; ;
+            decimal maxLoan = totalBalanceSek * 5;
 
-            Console.WriteLine($"Your total balance: {totalBalanceSek:N2} SEK");
-            Console.WriteLine($"Maximum allowed loan (x5): {maxLoan:N2} SEK\n");
+            ConsoleHelper.WriteInfo($"Your total balance: {totalBalanceSek:N2} SEK");
+            ConsoleHelper.WriteInfo($"Maximum allowed loan (x5): {maxLoan:N2} SEK");
+            Console.WriteLine();
 
-            // 1. Fråga först hur mycket användaren vill låna
-            Console.Write("How much would you like to borrow (SEK): ");
-            if (!decimal.TryParse(Console.ReadLine(), out var amount) || amount <= 0)
+            var amountInput = ConsoleHelper.PromptWithEscape("How much would you like to borrow (SEK)");
+            if (amountInput == "<ESC>")
+                return;
+
+            if (!decimal.TryParse(amountInput, out var amount) || amount <= 0)
             {
-                Console.WriteLine("\nInvalid amount.");
-                Console.ReadKey();
+                ConsoleHelper.WriteError("Invalid amount.");
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
             // 2. Kontrollera att det inte överskrider maxgränsen
             if (amount > maxLoan)
             {
-                Console.WriteLine("\nLoan denied. Requested amount exceeds your limit.");
-                Console.WriteLine("You can only borrow up to 5x your total account balance.");
-                Console.WriteLine("\nPress any key to continue...");
-                Console.ReadKey();
+                ConsoleHelper.WriteError("Loan denied. Requested amount exceeds your limit.");
+                ConsoleHelper.WriteWarning("You can only borrow up to 5x your total account balance.");
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
             // 3. Fråga sedan om antal månader
-            Console.Write("Over how many months would you like to repay the loan: ");
-            if (!int.TryParse(Console.ReadLine(), out var months) || months <= 0 || months > 300)
+            var monthsInput = ConsoleHelper.PromptWithEscape("Over how many months would you like to repay the loan");
+            if (monthsInput == "<ESC>")
+                return;
+
+            if (!int.TryParse(monthsInput, out var months) || months <= 0 || months > 300)
             {
-                Console.WriteLine("\nInvalid number of months.");
-                Console.ReadKey();
+                ConsoleHelper.WriteError("Invalid number of months (1-300).");
+                ConsoleHelper.PauseWithMessage();
                 return;
             }
 
@@ -102,15 +108,16 @@ namespace bank.Services
             decimal interestAmount = Math.Round(amount * (effectiveRate / 100m) * (months / 12m), 2);
             decimal totalRepayment = amount + interestAmount;
 
-            Console.WriteLine("\nLoan summary:\n");
-            Console.WriteLine($"Loan amount: {amount:N2} SEK");
-            Console.WriteLine($"Repayment period: {months} months");
-            Console.WriteLine($"Interest rate: {effectiveRate:N2}%");
-            Console.WriteLine($"Interest to pay: {interestAmount:N2} SEK");
-            Console.WriteLine($"Total repayment: {totalRepayment:N2} SEK");
+            ConsoleHelper.ClearScreen();
+            ConsoleHelper.WriteHeader("LOAN SUMMARY");
 
-            Console.WriteLine("\nPress any key to continue...");
-            Console.ReadKey();
+            ConsoleHelper.WriteInfo($"Loan amount: {amount:N2} SEK");
+            ConsoleHelper.WriteInfo($"Repayment period: {months} months");
+            ConsoleHelper.WriteInfo($"Interest rate: {effectiveRate:N2}%");
+            ConsoleHelper.WriteWarning($"Interest to pay: {interestAmount:N2} SEK");
+            ConsoleHelper.WriteSuccess($"Total repayment: {totalRepayment:N2} SEK");
+
+            ConsoleHelper.PauseWithMessage();
         }
     }
 }
