@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Linq;
+using System.Threading;
 using bank.Core;
 using bank.Utils;
 
@@ -263,7 +264,7 @@ namespace bank.Services
             ConsoleHelper.WriteHeader("ENTER PIN TO CONFIRM TRANSFER");
             if (!ValidatePin(sender)) return;
 
-            if (fromAcc.Balance < amount)
+            if (!accountService.CanWithdraw(fromAcc, amount))
             {
                 ConsoleHelper.WriteError("Insufficient funds.");
                 ConsoleHelper.PauseWithMessage();

@@ -1,4 +1,4 @@
-﻿using bank.Attributes;
+using bank.Attributes;
 using System;
 
 namespace bank.Core

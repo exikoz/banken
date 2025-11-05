@@ -1,7 +1,9 @@
 ﻿using bank.Core;
 using bank.Utils;
 using System;
+using System.Drawing;
 using System.Linq;
+using System.Security.Principal;
 
 namespace bank.Services
 {
@@ -13,6 +15,9 @@ namespace bank.Services
         {
             this.bank = bank;
         }
+
+
+
 
         public void ShowTransactionLog(User currentUser)
         {
@@ -37,7 +42,26 @@ namespace bank.Services
                 .OrderByDescending(x => x.Transaction.TimeStamp)
                 .ToList();
 
-            if (!allTransactions.Any())
+            var processingTransactions = allTransactions.Where(x => !x.Transaction.IsProcessed).ToList();
+            var completedTransactions = allTransactions.Where(x => x.Transaction.IsProcessed).ToList();
+            var deposits = allTransactions.Where(x => x.Transaction.Type == "Deposit");
+            var withdrawals = allTransactions.Where(x => x.Transaction.Type == "Withdraw");
+
+
+
+            IEnumerable<dynamic> TransactionToShow = allTransactions;
+
+            var filters = new List<(string Name, IEnumerable<dynamic> Data)>
+            {
+                ("All", allTransactions),
+                ("Processing", processingTransactions),
+                ("Completed", completedTransactions),
+                ("Withdrawals", withdrawals),
+                ("Deposits", deposits),
+
+            };
+
+            if (!ValidationHelper.IsValid(allTransactions))
             {
                 ConsoleHelper.WriteWarning("No transactions found.");
                 ConsoleHelper.PauseWithMessage();
@@ -50,9 +74,28 @@ namespace bank.Services
             );
             Console.WriteLine(new string('-', 150));
 
-            foreach (var item in allTransactions)
+
+
+
+
+            int x = 1;
+
+            ConsoleKeyInfo key;
+            do
             {
-                var t = item.Transaction;
+                Console.Clear();
+                Console.WriteLine("=== TRANSACTION LOG ===\n");
+                Console.WriteLine("(<-) Press left/right arrows to sort by columns (->)");
+                Console.WriteLine(new string('-', Console.WindowWidth -1));
+                Console.WriteLine($"{"Date sent",-22} | {"Type",-10} | {"Amount",-12} | {"Currency",-8} | {"From",-25} | {"To",-15} | {"Status",-15}");
+                Console.WriteLine(new string('-', Console.WindowWidth -1));
+
+                Console.WriteLine($"Currently viewing: {filters[x].Name}");
+
+
+                foreach (var item in filters[x].Data)
+                {
+                    var t = item.Transaction;
 
                 // From formatting
                 string fromDisplay =
@@ -88,9 +131,11 @@ namespace bank.Services
                     $"{t.Id,-10}"
                 );
             }
+            while (key.Key != ConsoleKey.Escape);
 
             Console.WriteLine(new string('-', 150));
             ConsoleHelper.PauseWithMessage();
         }
+
     }
 }

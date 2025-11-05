@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -16,7 +17,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace bank.Utils
 {
 
-    // Alexander 2025-10-28
+    // Alexander 2025-11-05
 
     public class JsonHelper
     {
@@ -48,6 +49,9 @@ namespace bank.Utils
          */
         public void WriteJson<T>(T data, string? name = null)
         {
+
+
+
             string FileName = name ?? typeof(T).Name + ".json";
             string _defaultPath =  Path.Combine(AppContext.BaseDirectory, FileName);
             List<T> existingData = new List<T>();
@@ -69,14 +73,14 @@ namespace bank.Utils
                 existingData.Add(data);
                 string output = JsonSerializer.Serialize(existingData, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(_defaultPath, output);
-                Console.WriteLine($"Json saved to this path: {_defaultPath}");
+                ConsoleHelper.WriteSuccess($"Json saved to this path: {_defaultPath}");
             }
             else
             {
                 existingData.Add(data);
                 string output = JsonSerializer.Serialize(existingData, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(_defaultPath, output);
-                Console.WriteLine($"Json saved to this path: {_defaultPath}"); // TODO switch with the response helper method later on
+                ConsoleHelper.WriteSuccess($"Json saved to this path: {_defaultPath}"); // TODO switch with the response helper method later on
             }
         }
         
@@ -89,20 +93,19 @@ namespace bank.Utils
         {
 
             if (!File.Exists(filePath)) return new List<T>();
-
-
             var jsonData = File.ReadAllText(filePath);
 
-            if (string.IsNullOrWhiteSpace(jsonData)) return new List<T>();
-
+            if (jsonData == null)
+                return new List<T>();
 
             try
             {
                 return JsonSerializer.Deserialize<List<T>>(jsonData) ?? new List<T>(); ; // Returns empty list instead of null to avoid annoying crashes
 
             }
-            catch (JsonException)
+            catch (JsonException e)
             {
+                ConsoleHelper.WriteError($"Json couldn't deserialize the file! Info: {e.Message} ");
                 return new List<T>();
             }
 
@@ -112,26 +115,78 @@ namespace bank.Utils
 
 
 
+        public void DeleteByPredicate<T>(Func<T, bool> predicate, string filePath) where T : class
+        {
+            if (!File.Exists(filePath))
+            {
+                ConsoleHelper.WriteWarning("File not found, nothing to remove.");
+                return;
+            }
+
+
+            List<T> dataSet = JsonHelper.DeserializeJson<T>(filePath);
+
+            if (dataSet == null || !dataSet.Any())
+            {
+                ConsoleHelper.WriteWarning("No data found in file.");
+                return;
+            }
+            var itemToRemove = dataSet.SingleOrDefault(predicate);
+
+            if (itemToRemove == null)
+            {
+                ConsoleHelper.WriteWarning("Currency not found in the file.");
+                return;
+            }
+
+            dataSet.Remove(itemToRemove);
+            //File.Copy(filePath, filePath + ".bak", overwrite: true);
+
+            string output = JsonSerializer.Serialize(dataSet, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(filePath, output);
+
+            ConsoleHelper.WriteSuccess("Data successfully removed!");
+        }
+        
+
+
+
 
 
         public void UpdateJson<T>(Func<T, bool> fieldToUpdate, T newData, string filePath)
         {
+            if (!ValidationHelper.IsValid(newData)) 
+                return;
+
+            if (!ValidationHelper.IsValid(filePath))
+                return;
+
+            if (!File.Exists(filePath))
+            { 
+                WriteJson(newData, filePath);
+                return;
+            }
+
             var dataSet = DeserializeJson<T>(filePath);
+
+
+
             if (dataSet == null)
             {
                Console.WriteLine("No data found.");
-            }
-            ;
+                return;
+            };
+
 
             var exists = dataSet.FirstOrDefault(fieldToUpdate);
             if (exists == null)
             {
                 dataSet.Add(newData);
             }
+
             else
             {
                 var matching = dataSet.IndexOf(exists);
-
                 if (matching >= 0)
                 {
                     dataSet[matching] = newData;
@@ -142,7 +197,7 @@ namespace bank.Utils
             }
             string output = JsonSerializer.Serialize(dataSet, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(filePath, output);
-
+            ConsoleHelper.WriteSuccess("Data successfully updated!");
         }
 
 
