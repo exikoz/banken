@@ -85,6 +85,9 @@ namespace bank.Services
             if (account == null)
                 return;
 
+            // Store previous balance to detect "first time deposit"
+            decimal before = account.Balance;
+
             var amountInput = ConsoleHelper.PromptWithEscape($"Amount ({account.Currency})");
             if (amountInput == "<ESC>")
                 return;
@@ -121,6 +124,20 @@ namespace bank.Services
 
             ConsoleHelper.WriteSuccess($"Deposit completed: {amount} {account.Currency}");
             ConsoleHelper.WriteSuccess($"New balance: {account.Balance:N2} {account.Currency}");
+
+            // NEW FEATURE: offer interest calculation right after first deposit
+            if (account is SavingsAccount && before == 0)
+            {
+                var runInterest = ConsoleHelper.PromptWithEscape("Do you want to calculate future interest? (yes/no)");
+
+                if (runInterest != "<ESC>" &&
+                    (runInterest.ToLower() == "yes" || runInterest.ToLower() == "y"))
+                {
+                    var interestService = new InterestService(bank);
+                    interestService.CalculateInterest(currentUser);
+                }
+            }
+
             ConsoleHelper.PauseWithMessage();
         }
 
