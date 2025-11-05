@@ -48,27 +48,13 @@ namespace bank.Services
             return Math.Round(result, 2);
 
         }
-        public void DeleteField(CurrencyCode code)
-        {
-            string fileName = typeof(ExchangeRate).Name + ".json";
-            string filePath = Path.Combine(AppContext.BaseDirectory, fileName);
 
-            jsonHelper.DeleteByPredicate<ExchangeRate>(
-                r => r.Code == code && r.CustomCode == null,
-                filePath
-            );
+        public void DeleteField(CurrencyCode rate)
+        {
+            ValidationHelper.IsValid(rate);
+            jsonHelper.RemoveJsonByField<ExchangeRate>(c => c.Code == rate, filePath);
         }
 
-        public void DeleteCustomField(string customCode)
-        {
-            string fileName = typeof(ExchangeRate).Name + ".json";
-            string filePath = Path.Combine(AppContext.BaseDirectory, fileName);
-
-            jsonHelper.DeleteByPredicate<ExchangeRate>(
-                r => r.CustomCode != null && r.CustomCode.Equals(customCode, StringComparison.OrdinalIgnoreCase),
-                filePath
-            );
-        }
         public void CreateFile(ExchangeRate rates)
         {
             jsonHelper.WriteJson(rates, filePath);
