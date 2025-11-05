@@ -1,4 +1,4 @@
-using bank.Core;
+﻿using bank.Core;
 using bank.Utils;
 using System;
 using System.Linq;
@@ -106,23 +106,39 @@ namespace bank.Services
                 return;
             }
 
-            ConsoleHelper.WriteInfo("Transaction will be completed in 15 minutes.");
-            Thread.Sleep(TimeSpan.FromMinutes(15));
-
-            decimal before = account.Balance;
-
-            account.Deposit(amount);
-
-            if (account.Balance == before)
+            if (!account.canTransfer)
             {
-                ConsoleHelper.WriteError("Deposit failed.");
-                Console.ReadKey();
+                ConsoleHelper.WriteError("There are pending transactions on your account. Please wait until they have finished processing.");
                 return;
             }
 
-            Console.WriteLine();
-            ConsoleHelper.WriteSuccess("Deposit completed.");
-            Console.WriteLine($"New balance: {account.Balance:N2} {account.Currency}");
+
+            account.canTransfer = false;
+            ConsoleHelper.WriteInfo("Transaction will be completed in 15 minutes.");
+
+            Thread backgroundThread = new Thread(() =>
+            {
+                try
+                {
+                    Thread.Sleep(TimeSpan.FromMinutes(1));
+                    decimal before = account.Balance;
+                    account.Deposit(amount);
+                    if (account.Balance == before)
+                    {
+                        ConsoleHelper.WriteError("Deposit failed.");
+                        return;
+                    }
+
+                    ConsoleHelper.WriteSuccess($"Deposit completed at {DateTime.UtcNow}.");
+                    Console.WriteLine($"New balance: {account.Balance:N2} {account.Currency}");
+                }
+                finally
+                {
+                    account.canTransfer = true;
+                }
+            });
+            backgroundThread.IsBackground = true;
+            backgroundThread.Start();
 
             Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
@@ -147,29 +163,39 @@ namespace bank.Services
 
             if (!CanWithdraw(account, amount))
             {
-                ConsoleHelper.WriteError("Insufficient funds for this withdrawal.");
                 Console.ReadKey();
                 return;
             }
+            account.canTransfer = false;
 
             ConsoleHelper.WriteInfo("Transaction will be completed in 15 minutes.");
-            Thread.Sleep(TimeSpan.FromMinutes(15));
 
-            decimal before = account.Balance;
 
-            account.Withdraw(amount);
 
-            if (account.Balance == before)
+
+            Thread backgroundThread = new Thread(() =>
             {
-                ConsoleHelper.WriteError("Withdraw failed. Check balance or limits.");
-                Console.ReadKey();
-                return;
-            }
+                try
+                {
+                    Thread.Sleep(TimeSpan.FromMinutes(1));
+                    decimal before = account.Balance;
+                    account.Withdraw(amount);
+                    if (account.Balance == before)
+                    {
+                        ConsoleHelper.WriteError("Withdrawal failed.");
+                        return;
+                    }
 
-            Console.WriteLine();
-            ConsoleHelper.WriteSuccess($"Withdraw completed.");
-            Console.WriteLine($"New balance: {account.Balance:N2} {account.Currency}");
-
+                    ConsoleHelper.WriteSuccess($"Withdrawal completed at {DateTime.UtcNow}.");
+                    Console.WriteLine($"New balance: {account.Balance:N2} {account.Currency}");
+                }
+                finally
+                {
+                    account.canTransfer = true;
+                }
+            });
+            backgroundThread.IsBackground = true;
+            backgroundThread.Start();
             Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
         }
@@ -177,7 +203,17 @@ namespace bank.Services
         public bool CanWithdraw(Account account, decimal amount)
         {
             if (amount <= 0)
+            {
+                ConsoleHelper.WriteError("Insufficient funds for this withdrawal.");
                 return false;
+
+            }
+
+            if (!account.canTransfer)
+            {
+                ConsoleHelper.WriteError("There are pending transactions on your account. Please wait until they have finished processing.");
+                return false;
+            }
 
             if (account is SavingsAccount savings)
             {
@@ -229,6 +265,10 @@ namespace bank.Services
             ConsoleHelper.WriteError("Invalid selection.");
             ConsoleHelper.PauseWithMessage();
             return null;
+        }
+        public bool isLocked(Account acc)
+        {
+            return acc.canTransfer;
         }
     }
 }

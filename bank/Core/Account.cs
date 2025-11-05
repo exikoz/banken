@@ -12,6 +12,7 @@ namespace bank.Core
         public string Currency { get; set; }
         public List<Transaction> Transactions { get; } = new();
 
+        public bool canTransfer { get; set; }
         public Account(string accountNumber, User owner, string accountType = "Generic", string currency = "SEK")
         {
             AccountNumber = accountNumber;
@@ -19,12 +20,16 @@ namespace bank.Core
             AccountType = accountType;
             Currency = currency;
             Balance = 0;
+            canTransfer = true;
         }
 
         // Deposit logic with transaction logging
         public virtual void Deposit(decimal amount)
         {
-            if (amount <= 0)
+            if (amount <= 0 )
+                return;
+
+            if (!canTransfer)
                 return;
 
             Balance += amount;
@@ -43,8 +48,8 @@ namespace bank.Core
                 toUser: Owner.Name
             );
 
-            tx.IsPending = false;
-            tx.Status = "Completed";
+            tx.IsPending = true;
+            tx.Status = "Pending";
 
             Transactions.Add(tx);
         }
@@ -58,7 +63,9 @@ namespace bank.Core
             if (amount > Balance)
                 return;
 
-            Balance -= amount;
+            if (!canTransfer)
+                return;
+
 
             var tx = new Transaction(
                 id: Bank.GenerateTransactionId(),
@@ -74,10 +81,11 @@ namespace bank.Core
                 toUser: "ATM"
             );
 
-            tx.IsPending = false;
-            tx.Status = "Completed";
+            tx.IsPending = true;
+            tx.Status = "Pending";
 
             Transactions.Add(tx);
         }
+
     }
 }
